@@ -28,11 +28,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <arpa/inet.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
-#include <unistd.h>
 
 #include <fstream>
 #include <iostream>
@@ -46,12 +44,8 @@
 #include <google/protobuf/descriptor.pb.h>
 #include <google/protobuf/stubs/strutil.h>
 
-#ifndef htonl
-#include <netinet/in.h>
-#endif
-
 #ifndef O_EXLOCK
-#include <sys/file.h>
+//#include <sys/file.h>
 #endif
 
 // NOTE: src/google/protobuf/compiler/plugin.cc makes use of cerr for some
@@ -973,14 +967,14 @@ class DecodeDataBuilder {
   }
 
  private:
-  static const uint8_t kAddUnderscore = 0b10000000;
+  static const uint8_t kAddUnderscore = 0x80;
 
-  static const uint8_t kOpAsIs = 0b00000000;
-  static const uint8_t kOpFirstUpper = 0b01000000;
-  static const uint8_t kOpFirstLower = 0b00100000;
-  static const uint8_t kOpAllUpper = 0b01100000;
+  static const uint8_t kOpAsIs = 0x0;
+  static const uint8_t kOpFirstUpper = 0x40;
+  static const uint8_t kOpFirstLower = 0x20;
+  static const uint8_t kOpAllUpper = 0x60;
 
-  static const int kMaxSegmentLen = 0b00011111;
+  static const int kMaxSegmentLen = 0x1f;
 
   void AddChar(const char desired) {
     ++segment_len_;

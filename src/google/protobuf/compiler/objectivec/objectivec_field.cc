@@ -39,10 +39,6 @@
 #include <google/protobuf/stubs/common.h>
 #include <google/protobuf/stubs/strutil.h>
 
-#ifndef htonl
-#include <netinet/in.h>
-#endif
-
 namespace google {
 namespace protobuf {
 namespace compiler {

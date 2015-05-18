@@ -31,11 +31,20 @@
 #ifndef GOOGLE_PROTOBUF_COMPILER_OBJECTIVEC_HELPERS_H__
 #define GOOGLE_PROTOBUF_COMPILER_OBJECTIVEC_HELPERS_H__
 
+#include <stdint.h>
 #include <string>
 #include <vector>
 
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/descriptor.pb.h>
+
+#ifndef htonl
+#if defined(_WIN64) || defined(WIN64) || defined(_WIN32) || defined(WIN32)
+#include <WinSock2.h>
+#elif
+#include <netinet/in.h>
+#endif
+#endif
 
 namespace google {
 namespace protobuf {
