@@ -34,6 +34,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Security;
 using System.Text;
 #if !NET35
 using System.Threading;
@@ -384,10 +385,8 @@ namespace Google.Protobuf
         /// <summary>
         /// Used internally by CodedOutputStream to avoid creating a copy for the write
         /// </summary>
-        internal void WriteRawBytesTo(CodedOutputStream outputStream)
-        {
-            outputStream.WriteRawBytes(bytes, 0, bytes.Length);
-        }
+        [SecurityCritical]
+        internal void WriteRawBytesTo(CodedOutputStream outputStream, ref Span<byte> immediateBuffer) => outputStream.WriteRawBytes(bytes, ref immediateBuffer);
 
         /// <summary>
         /// Copies the entire byte array to the destination array provided at the offset specified.
