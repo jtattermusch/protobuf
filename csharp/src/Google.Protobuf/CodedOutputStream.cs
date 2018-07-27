@@ -32,12 +32,7 @@
 
 using Google.Protobuf.Collections;
 using System;
-using System.Buffers;
-using System.Buffers.Binary;
-using System.ComponentModel;
 using System.IO;
-using System.Runtime.CompilerServices;
-using System.Security;
 using System.Text;
 
 namespace Google.Protobuf
@@ -72,13 +67,9 @@ namespace Google.Protobuf
 
         private readonly bool leaveOpen;
         private readonly byte[] buffer;
-        private int limit;
+        private readonly int limit;
         private int position;
         private readonly Stream output;
-
-        private Memory<byte> nativeBuffer;
-        private readonly IBufferWriter<byte> nativeOutput;
-        private long nativeOutputPosition;
 
         #region Construction
         /// <summary>
@@ -91,41 +82,13 @@ namespace Google.Protobuf
         }
 
         /// <summary>
-        /// Creates a new CodedOutputStream that writes directly to the contiguous
-        /// memory. If more bytes are written than fit in the memory,
-        /// OutOfSpaceException will be thrown.
-        /// </summary>
-        [SecurityCritical]
-        public CodedOutputStream(Memory<byte> nativeBuffer)
-        {
-            this.nativeBuffer = nativeBuffer;
-            this.position = 0;
-            this.limit = nativeBuffer.Length;
-            leaveOpen = true; // Simple way of avoiding trying to dispose of a null reference
-        }
-
-        /// <summary>
-        /// Creates a new CodedOutputStream that writes directly to the contiguous
-        /// memory. If more bytes are written than fit in the memory,
-        /// OutOfSpaceException will be thrown.
-        /// </summary>
-        [SecurityCritical]
-        public CodedOutputStream(IBufferWriter<byte> nativeOutput)
-        {
-            this.nativeOutput = ProtoPreconditions.CheckNotNull(nativeOutput, nameof(nativeOutput));
-            this.nativeBuffer = nativeOutput.GetMemory();
-            this.position = 0;
-            this.limit = nativeBuffer.Length;
-            leaveOpen = true; // Simple way of avoiding trying to dispose of a null reference
-        }
-
-        /// <summary>
         /// Creates a new CodedOutputStream that writes directly to the given
         /// byte array slice. If more bytes are written than fit in the array,
         /// OutOfSpaceException will be thrown.
         /// </summary>
         private CodedOutputStream(byte[] buffer, int offset, int length)
         {
+            this.output = null;
             this.buffer = buffer;
             this.position = offset;
             this.limit = offset + length;
@@ -194,14 +157,8 @@ namespace Google.Protobuf
                 {
                     return output.Position + position;
                 }
-                return nativeOutputPosition + position;
+                return position;
             }
-        }
-
-        internal Span<byte> ImmediateBuffer
-        {
-            [SecurityCritical]
-            get => buffer != null ? buffer : nativeBuffer.Span;
         }
 
         #region Writing of values (not including tags)
@@ -210,84 +167,33 @@ namespace Google.Protobuf
         /// Writes a double field value, without a tag, to the stream.
         /// </summary>
         /// <param name="value">The value to write</param>
-        [SecuritySafeCritical]
         public void WriteDouble(double value)
         {
-            var immediateBudder = ImmediateBuffer;
-            WriteDouble(value, ref immediateBudder);
+            WriteRawLittleEndian64((ulong)BitConverter.DoubleToInt64Bits(value));
         }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteDouble(double value, ref Span<byte> immediateBuffer) => WriteRawLittleEndian64((ulong)BitConverter.DoubleToInt64Bits(value), ref immediateBuffer);
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteWrappedDouble(double? value, ref Span<byte> immediateBuffer)
-        {
-            if (value.Value == default(double))
-            {
-                WriteLength(0, ref immediateBuffer);
-            }
-            else
-            {
-                WriteRawByte(LittleEndian64Size + 1, ref immediateBuffer);
-                WriteRawByte(WellKnownTypes.WrappersReflection.WrapperValueFixed64TagByte, ref immediateBuffer);
-                WriteDouble(value.Value, ref immediateBuffer);
-            }
-        }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-#if NETCOREAPP2_1
-        public void WriteFloat(float value, ref Span<byte> immediateBuffer) => WriteRawLittleEndian32((uint)BitConverter.SingleToInt32Bits(value), ref immediateBuffer);
-#else
-        public void WriteFloat(float value, ref Span<byte> immediateBuffer) => WriteRawLittleEndian32((uint)SingleToInt32BitsSlow(value), ref immediateBuffer);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int SingleToInt32BitsSlow(float value) => BitConverter.ToInt32(BitConverter.GetBytes(value), 0);
-#endif
 
         /// <summary>
         /// Writes a float field value, without a tag, to the stream.
         /// </summary>
         /// <param name="value">The value to write</param>
-        [SecuritySafeCritical]
         public void WriteFloat(float value)
         {
-            var immediateBudder = ImmediateBuffer;
-            WriteDouble(value, ref immediateBudder);
-        }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteWrappedFloat(float? value, ref Span<byte> immediateBuffer)
-        {
-            if (value.Value == default(float))
+            byte[] rawBytes = BitConverter.GetBytes(value);
+            if (!BitConverter.IsLittleEndian)
             {
-                WriteLength(0, ref immediateBuffer);
+                ByteArray.Reverse(rawBytes);
+            }
+
+            if (limit - position >= 4)
+            {
+                buffer[position++] = rawBytes[0];
+                buffer[position++] = rawBytes[1];
+                buffer[position++] = rawBytes[2];
+                buffer[position++] = rawBytes[3];
             }
             else
             {
-                WriteRawByte(LittleEndian32Size + 1, ref immediateBuffer);
-                WriteRawByte(WellKnownTypes.WrappersReflection.WrapperValueFixed32TagByte, ref immediateBuffer);
-                WriteFloat(value.Value, ref immediateBuffer);
+                WriteRawBytes(rawBytes, 0, 4);
             }
         }
 
@@ -295,102 +201,34 @@ namespace Google.Protobuf
         /// Writes a uint64 field value, without a tag, to the stream.
         /// </summary>
         /// <param name="value">The value to write</param>
-        [SecuritySafeCritical]
         public void WriteUInt64(ulong value)
         {
-            var immediateBudder = ImmediateBuffer;
-            WriteUInt64(value, ref immediateBudder);
+            WriteRawVarint64(value);
         }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteUInt64(ulong value, ref Span<byte> immediateBuffer) => WriteRawVarint64(value, ref immediateBuffer);
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteWrappedUInt64(ulong? value, ref Span<byte> immediateBuffer) => WriteWrappedRawVarint64(value.Value, ref immediateBuffer);
 
         /// <summary>
         /// Writes an int64 field value, without a tag, to the stream.
         /// </summary>
         /// <param name="value">The value to write</param>
-        [SecuritySafeCritical]
         public void WriteInt64(long value)
         {
-            var immediateBudder = ImmediateBuffer;
-            WriteInt64(value, ref immediateBudder);
-        }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteInt64(long value, ref Span<byte> immediateBuffer) => WriteRawVarint64((ulong)value, ref immediateBuffer);
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteWrappedInt64(long? value, ref Span<byte> immediateBuffer) => WriteWrappedRawVarint64((ulong)value.Value, ref immediateBuffer);
-       
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteInt32(int value, ref Span<byte> immediateBuffer)
-        {
-            if (value >= 0)
-            {
-                WriteRawVarint32((uint)value, ref immediateBuffer);
-            }
-            else
-            {
-                // Must sign-extend.
-                WriteRawVarint64((ulong)value, ref immediateBuffer);
-            }
+            WriteRawVarint64((ulong) value);
         }
 
         /// <summary>
         /// Writes an int32 field value, without a tag, to the stream.
         /// </summary>
         /// <param name="value">The value to write</param>
-        [SecuritySafeCritical]
         public void WriteInt32(int value)
         {
-            var immediateBuffer = ImmediateBuffer;
-            WriteInt32(value, ref immediateBuffer);
-        }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteWrappedInt32(int? value, ref Span<byte> immediateBuffer)
-        {
-            if (value.Value >= 0)
+            if (value >= 0)
             {
-                WriteWrappedRawVarint32((uint)value, ref immediateBuffer);
+                WriteRawVarint32((uint) value);
             }
             else
             {
                 // Must sign-extend.
-                WriteWrappedRawVarint64((ulong)value, ref immediateBuffer);
+                WriteRawVarint64((ulong) value);
             }
         }
 
@@ -398,76 +236,27 @@ namespace Google.Protobuf
         /// Writes a fixed64 field value, without a tag, to the stream.
         /// </summary>
         /// <param name="value">The value to write</param>
-        [SecuritySafeCritical]
         public void WriteFixed64(ulong value)
         {
-            var immediateBuffer = ImmediateBuffer;
-            WriteFixed64(value, ref immediateBuffer);
+            WriteRawLittleEndian64(value);
         }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteFixed64(ulong value, ref Span<byte> immediateBuffer) => WriteRawLittleEndian64(value, ref immediateBuffer);
 
         /// <summary>
         /// Writes a fixed32 field value, without a tag, to the stream.
         /// </summary>
         /// <param name="value">The value to write</param>
-        [SecuritySafeCritical]
         public void WriteFixed32(uint value)
         {
-            var immediateBudder = ImmediateBuffer;
-            WriteFixed32(value, ref immediateBudder);
+            WriteRawLittleEndian32(value);
         }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteFixed32(uint value, ref Span<byte> immediateBuffer) => WriteRawLittleEndian32(value, ref immediateBuffer);
 
         /// <summary>
         /// Writes a bool field value, without a tag, to the stream.
         /// </summary>
         /// <param name="value">The value to write</param>
-        [SecuritySafeCritical]
         public void WriteBool(bool value)
         {
-            var immediateBudder = ImmediateBuffer;
-            WriteBool(value, ref immediateBudder);
-        }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteBool(bool value, ref Span<byte> immediateBuffer) => WriteRawByte(value ? (byte)1 : (byte)0, ref immediateBuffer);
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteWrappedBool(bool? value, ref Span<byte> immediateBuffer)
-        {
-            if (value.Value)
-            {
-                WriteRawByte(2, ref immediateBuffer);
-                WriteRawByte(WellKnownTypes.WrappersReflection.WrapperValueVarintTagByte, ref immediateBuffer);
-                WriteRawByte(1, ref immediateBuffer);
-            }
-            else
-            {
-                WriteRawByte(0, ref immediateBuffer);
-            }
+            WriteRawByte(value ? (byte) 1 : (byte) 0);
         }
 
         /// <summary>
@@ -475,92 +264,31 @@ namespace Google.Protobuf
         /// The data is length-prefixed.
         /// </summary>
         /// <param name="value">The value to write</param>
-        [SecuritySafeCritical]
         public void WriteString(string value)
         {
-            var immediateBudder = ImmediateBuffer;
-            WriteString(value, ref immediateBudder);
-        }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteString(string value, ref Span<byte> immediateBuffer)
-        {
-            if (value.Length == 0)
+            // Optimise the case where we have enough space to write
+            // the string directly to the buffer, which should be common.
+            int length = Utf8Encoding.GetByteCount(value);
+            WriteLength(length);
+            if (limit - position >= length)
             {
-                WriteRawByte(0, ref immediateBuffer);
-            }
-            else
-            {
-                // Optimise the case where we have enough space to write
-                // the string directly to the buffer, which should be common.
-                int length = Utf8Encoding.GetByteCount(value);
-                WriteLength(length, ref immediateBuffer);
-                if (limit - position >= length)
+                if (length == value.Length) // Must be all ASCII...
                 {
-                    if (length == value.Length) // Must be all ASCII...
+                    for (int i = 0; i < length; i++)
                     {
-                        for (int i = 0; i < length; i++)
-                        {
-                            immediateBuffer[position + i] = (byte)value[i];
-                        }
+                        buffer[position + i] = (byte)value[i];
                     }
-                    else
-                    {
-#if NETCOREAPP2_1
-                        Utf8Encoding.GetBytes(value, immediateBuffer);
-#else
-                    if (buffer != null)
-                    {
-                        Utf8Encoding.GetBytes(value, 0, value.Length, buffer, position);
-                    }
-                    else
-                    {
-                        var temp = ArrayPool<byte>.Shared.Rent(length);
-                        try
-                        {
-                            Utf8Encoding.GetBytes(value, 0, value.Length, temp, position);
-                            temp.AsSpan(0, length).CopyTo(immediateBuffer);
-                        }
-                        finally
-                        {
-                            ArrayPool<byte>.Shared.Return(temp);
-                        }
-                    }
-#endif
-                    }
-                    position += length;
                 }
                 else
                 {
-                    byte[] bytes = Utf8Encoding.GetBytes(value);
-                    WriteRawBytes(bytes, ref immediateBuffer);
+                    Utf8Encoding.GetBytes(value, 0, value.Length, buffer, position);
                 }
-            }
-        }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteWrappedString(string value, ref Span<byte> immediateBuffer)
-        {
-            if (value.Length == 0)
-            {
-                WriteRawByte(0, ref immediateBuffer);
+                position += length;
             }
             else
             {
-                var length = ComputeStringSize(value) + 1;
-                WriteLength(length, ref immediateBuffer);
-                WriteRawByte(WellKnownTypes.WrappersReflection.WrapperValueLengthDelimitedTagByte, ref immediateBuffer);
-                WriteString(value, ref immediateBuffer);
+                byte[] bytes = Utf8Encoding.GetBytes(value);
+                WriteRawBytes(bytes);
             }
         }
 
@@ -569,23 +297,10 @@ namespace Google.Protobuf
         /// The data is length-prefixed.
         /// </summary>
         /// <param name="value">The value to write</param>
-        [SecuritySafeCritical]
         public void WriteMessage(IMessage value)
         {
-            var immediateBudder = ImmediateBuffer;
-            WriteMessage(value, ref immediateBudder);
-        }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteMessage(IMessage value, ref Span<byte> immediateBuffer)
-        {
-            WriteLength(value.CalculateSize(), ref immediateBuffer);
-            value.WriteTo(this, ref immediateBuffer);
+            WriteLength(value.CalculateSize());
+            value.WriteTo(this);
         }
 
         /// <summary>
@@ -593,167 +308,65 @@ namespace Google.Protobuf
         /// The data is length-prefixed.
         /// </summary>
         /// <param name="value">The value to write</param>
-        [SecuritySafeCritical]
         public void WriteBytes(ByteString value)
         {
-            var immediateBudder = ImmediateBuffer;
-            WriteBytes(value, ref immediateBudder);
-        }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteBytes(ByteString value, ref Span<byte> immediateBuffer)
-        {
-            WriteLength(value.Length, ref immediateBuffer);
-            value.WriteRawBytesTo(this, ref immediateBuffer);
-        }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteWrappedBytes(ByteString value, ref Span<byte> immediateBuffer)
-        {
-            if (value.Length == 0)
-            {
-                WriteRawByte(0, ref immediateBuffer);
-            }
-            else
-            {
-                var length = ComputeBytesSize(value) + 1;
-                WriteLength(length, ref immediateBuffer);
-                WriteRawByte(WellKnownTypes.WrappersReflection.WrapperValueLengthDelimitedTagByte, ref immediateBuffer);
-                WriteBytes(value, ref immediateBuffer);
-            }
+            WriteLength(value.Length);
+            value.WriteRawBytesTo(this);
         }
 
         /// <summary>
         /// Writes a uint32 value, without a tag, to the stream.
         /// </summary>
         /// <param name="value">The value to write</param>
-        [SecuritySafeCritical]
         public void WriteUInt32(uint value)
         {
-            var immediateBudder = ImmediateBuffer;
-            WriteUInt32(value, ref immediateBudder);
+            WriteRawVarint32(value);
         }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteUInt32(uint value, ref Span<byte> immediateBuffer) => WriteRawVarint32(value, ref immediateBuffer);
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteWrappedUInt32(uint? value, ref Span<byte> immediateBuffer) => WriteWrappedRawVarint32(value.Value, ref immediateBuffer);
 
         /// <summary>
         /// Writes an enum value, without a tag, to the stream.
         /// </summary>
         /// <param name="value">The value to write</param>
-        [SecuritySafeCritical]
         public void WriteEnum(int value)
         {
-            var immediateBudder = ImmediateBuffer;
-            WriteEnum(value, ref immediateBudder);
+            WriteInt32(value);
         }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteEnum(int value, ref Span<byte> immediateBuffer) => WriteInt32(value, ref immediateBuffer);
 
         /// <summary>
         /// Writes an sfixed32 value, without a tag, to the stream.
         /// </summary>
         /// <param name="value">The value to write.</param>
-        [SecuritySafeCritical]
         public void WriteSFixed32(int value)
         {
-            var immediateBudder = ImmediateBuffer;
-            WriteSFixed32(value, ref immediateBudder);
+            WriteRawLittleEndian32((uint) value);
         }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteSFixed32(int value, ref Span<byte> immediateBuffer) => WriteRawLittleEndian32((uint)value, ref immediateBuffer);
 
         /// <summary>
         /// Writes an sfixed64 value, without a tag, to the stream.
         /// </summary>
         /// <param name="value">The value to write</param>
-        [SecuritySafeCritical]
         public void WriteSFixed64(long value)
         {
-            var immediateBudder = ImmediateBuffer;
-            WriteSFixed64(value, ref immediateBudder);
+            WriteRawLittleEndian64((ulong) value);
         }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteSFixed64(long value, ref Span<byte> immediateBuffer) => WriteRawLittleEndian64((ulong)value, ref immediateBuffer);
 
         /// <summary>
         /// Writes an sint32 value, without a tag, to the stream.
         /// </summary>
         /// <param name="value">The value to write</param>
-        [SecuritySafeCritical]
         public void WriteSInt32(int value)
         {
-            var immediateBudder = ImmediateBuffer;
-            WriteSInt32(value, ref immediateBudder);
+            WriteRawVarint32(EncodeZigZag32(value));
         }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteSInt32(int value, ref Span<byte> immediateBuffere) => WriteRawVarint32(EncodeZigZag32(value), ref immediateBuffere);
 
         /// <summary>
         /// Writes an sint64 value, without a tag, to the stream.
         /// </summary>
         /// <param name="value">The value to write</param>
-        [SecuritySafeCritical]
         public void WriteSInt64(long value)
         {
-            var immediateBudder = ImmediateBuffer;
-            WriteSInt64(value, ref immediateBudder);
+            WriteRawVarint64(EncodeZigZag64(value));
         }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteSInt64(long value, ref Span<byte> immediateBuffer) => WriteRawVarint64(EncodeZigZag64(value), ref immediateBuffer);
 
         /// <summary>
         /// Writes a length (in bytes) for length-delimited data.
@@ -762,104 +375,51 @@ namespace Google.Protobuf
         /// This method simply writes a rawint, but exists for clarity in calling code.
         /// </remarks>
         /// <param name="length">Length value, in bytes.</param>
-        [SecuritySafeCritical]
         public void WriteLength(int length)
         {
-            var immediateBuffer = ImmediateBuffer;
-            WriteLength(length, ref immediateBuffer);
+            WriteRawVarint32((uint) length);
         }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteLength(int length, ref Span<byte> immediateBuffer) => WriteRawVarint32((uint)length, ref immediateBuffer);
 
         #endregion
 
         #region Raw tag writing
         /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteTag(int fieldNumber, WireFormat.WireType type, ref Span<byte> immediateBuffer) => WriteRawVarint32(WireFormat.MakeTag(fieldNumber, type), ref immediateBuffer);
-
-        /// <summary>
         /// Encodes and writes a tag.
         /// </summary>
         /// <param name="fieldNumber">The number of the field to write the tag for</param>
         /// <param name="type">The wire format type of the tag to write</param>
-        [SecuritySafeCritical]
         public void WriteTag(int fieldNumber, WireFormat.WireType type)
         {
-            var immediateBuffer = ImmediateBuffer;
-            WriteTag(fieldNumber, type, ref immediateBuffer);
+            WriteRawVarint32(WireFormat.MakeTag(fieldNumber, type));
         }
 
         /// <summary>
         /// Writes an already-encoded tag.
         /// </summary>
         /// <param name="tag">The encoded tag</param>
-        [SecuritySafeCritical]
         public void WriteTag(uint tag)
         {
-            var immediateBuffer = ImmediateBuffer;
-            WriteTag(tag, ref immediateBuffer);
+            WriteRawVarint32(tag);
         }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteTag(uint tag, ref Span<byte> immediateBuffer) => WriteRawVarint32(tag, ref immediateBuffer);
 
         /// <summary>
         /// Writes the given single-byte tag directly to the stream.
         /// </summary>
         /// <param name="b1">The encoded tag</param>
-        [SecuritySafeCritical]
         public void WriteRawTag(byte b1)
         {
-            var immediateBudder = ImmediateBuffer;
-            WriteRawTag(b1, ref immediateBudder);
+            WriteRawByte(b1);
         }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteRawTag(byte b1, ref Span<byte> immediateBuffer) => WriteRawByte(b1, ref immediateBuffer);
 
         /// <summary>
         /// Writes the given two-byte tag directly to the stream.
         /// </summary>
         /// <param name="b1">The first byte of the encoded tag</param>
         /// <param name="b2">The second byte of the encoded tag</param>
-        [SecuritySafeCritical]
         public void WriteRawTag(byte b1, byte b2)
         {
-            var immediateBudder = ImmediateBuffer;
-            WriteRawTag(b1, b2, ref immediateBudder);
-        }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteRawTag(byte b1, byte b2, ref Span<byte> immediateBuffer)
-        {
-            WriteRawByte(b1, ref immediateBuffer);
-            WriteRawByte(b2, ref immediateBuffer);
+            WriteRawByte(b1);
+            WriteRawByte(b2);
         }
 
         /// <summary>
@@ -868,24 +428,11 @@ namespace Google.Protobuf
         /// <param name="b1">The first byte of the encoded tag</param>
         /// <param name="b2">The second byte of the encoded tag</param>
         /// <param name="b3">The third byte of the encoded tag</param>
-        [SecuritySafeCritical]
         public void WriteRawTag(byte b1, byte b2, byte b3)
         {
-            var immediateBudder = ImmediateBuffer;
-            WriteRawTag(b1, b2, b3, ref immediateBudder);
-        }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteRawTag(byte b1, byte b2, byte b3, ref Span<byte> immediateBuffer)
-        {
-            WriteRawByte(b1, ref immediateBuffer);
-            WriteRawByte(b2, ref immediateBuffer);
-            WriteRawByte(b3, ref immediateBuffer);
+            WriteRawByte(b1);
+            WriteRawByte(b2);
+            WriteRawByte(b3);
         }
 
         /// <summary>
@@ -895,25 +442,12 @@ namespace Google.Protobuf
         /// <param name="b2">The second byte of the encoded tag</param>
         /// <param name="b3">The third byte of the encoded tag</param>
         /// <param name="b4">The fourth byte of the encoded tag</param>
-        [SecuritySafeCritical]
         public void WriteRawTag(byte b1, byte b2, byte b3, byte b4)
         {
-            var immediateBudder = ImmediateBuffer;
-            WriteRawTag(b1, b2, b3, b4, ref immediateBudder);
-        }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteRawTag(byte b1, byte b2, byte b3, byte b4, ref Span<byte> immediateBuffer)
-        {
-            WriteRawByte(b1, ref immediateBuffer);
-            WriteRawByte(b2, ref immediateBuffer);
-            WriteRawByte(b3, ref immediateBuffer);
-            WriteRawByte(b4, ref immediateBuffer);
+            WriteRawByte(b1);
+            WriteRawByte(b2);
+            WriteRawByte(b3);
+            WriteRawByte(b4);
         }
 
         /// <summary>
@@ -924,26 +458,13 @@ namespace Google.Protobuf
         /// <param name="b3">The third byte of the encoded tag</param>
         /// <param name="b4">The fourth byte of the encoded tag</param>
         /// <param name="b5">The fifth byte of the encoded tag</param>
-        [SecuritySafeCritical]
         public void WriteRawTag(byte b1, byte b2, byte b3, byte b4, byte b5)
         {
-            var immediateBudder = ImmediateBuffer;
-            WriteRawTag(b1, b2, b3, b4, b5, ref immediateBudder);
-        }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        public void WriteRawTag(byte b1, byte b2, byte b3, byte b4, byte b5, ref Span<byte> immediateBuffer)
-        {
-            WriteRawByte(b1, ref immediateBuffer);
-            WriteRawByte(b2, ref immediateBuffer);
-            WriteRawByte(b3, ref immediateBuffer);
-            WriteRawByte(b4, ref immediateBuffer);
-            WriteRawByte(b5, ref immediateBuffer);
+            WriteRawByte(b1);
+            WriteRawByte(b2);
+            WriteRawByte(b3);
+            WriteRawByte(b4);
+            WriteRawByte(b5);
         }
         #endregion
 
@@ -953,281 +474,160 @@ namespace Google.Protobuf
         /// there's enough buffer space left to whizz through without checking
         /// for each byte; otherwise, we resort to calling WriteRawByte each time.
         /// </summary>
-        [SecuritySafeCritical]
         internal void WriteRawVarint32(uint value)
-        {
-            var immediateBudder = ImmediateBuffer;
-            WriteRawVarint32(value, ref immediateBudder);
-        }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        internal void WriteRawVarint32(uint value, ref Span<byte> immediateBuffer)
         {
             // Optimize for the common case of a single byte value
             if (value < 128 && position < limit)
             {
-                immediateBuffer[position++] = (byte)value;
+                buffer[position++] = (byte)value;
                 return;
             }
 
             while (value > 127 && position < limit)
             {
-                immediateBuffer[position++] = (byte) ((value & 0x7F) | 0x80);
+                buffer[position++] = (byte) ((value & 0x7F) | 0x80);
                 value >>= 7;
             }
             while (value > 127)
             {
-                WriteRawByte((byte)((value & 0x7F) | 0x80), ref immediateBuffer);
+                WriteRawByte((byte) ((value & 0x7F) | 0x80));
                 value >>= 7;
             }
             if (position < limit)
             {
-                immediateBuffer[position++] = (byte)value;
+                buffer[position++] = (byte) value;
             }
             else
             {
-                WriteRawByte((byte)value, ref immediateBuffer);
+                WriteRawByte((byte) value);
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        private void WriteWrappedRawVarint32(uint value, ref Span<byte> immediateBuffer)
-        {
-            if (value == default(uint))
-            {
-                WriteRawByte(0, ref immediateBuffer);
-            }
-            else
-            {
-                var length = ComputeRawVarint32Size(value) + 1;
-                WriteRawByte((byte)length, ref immediateBuffer);
-                WriteRawByte(WellKnownTypes.WrappersReflection.WrapperValueVarintTagByte, ref immediateBuffer);
-                WriteRawVarint32(value, ref immediateBuffer);
-            }
-        }
-
-        [SecurityCritical]
         internal void WriteRawVarint64(ulong value)
-        {
-            var immediateBuffer = ImmediateBuffer;
-            WriteRawVarint64(value, ref immediateBuffer);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        private void WriteRawVarint64(ulong value, ref Span<byte> immediateBuffer)
         {
             while (value > 127 && position < limit)
             {
-                immediateBuffer[position++] = (byte)((value & 0x7F) | 0x80);
+                buffer[position++] = (byte) ((value & 0x7F) | 0x80);
                 value >>= 7;
             }
             while (value > 127)
             {
-                WriteRawByte((byte) ((value & 0x7F) | 0x80), ref immediateBuffer);
+                WriteRawByte((byte) ((value & 0x7F) | 0x80));
                 value >>= 7;
             }
             if (position < limit)
             {
-                immediateBuffer[position++] = (byte)value;
+                buffer[position++] = (byte) value;
             }
             else
             {
-                WriteRawByte((byte)value, ref immediateBuffer);
+                WriteRawByte((byte) value);
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        private void WriteWrappedRawVarint64(ulong value, ref Span<byte> immediateBuffer)
-        {
-            if (value == default(ulong))
-            {
-                WriteRawByte(0, ref immediateBuffer);
-            }
-            else
-            {
-                var length = ComputeRawVarint64Size(value) + 1;
-                WriteRawByte((byte)length, ref immediateBuffer);
-                WriteRawByte(WellKnownTypes.WrappersReflection.WrapperValueVarintTagByte, ref immediateBuffer);
-                WriteRawVarint64(value, ref immediateBuffer);
-            }
-        }
-
-        [SecurityCritical]
         internal void WriteRawLittleEndian32(uint value)
-        {
-            var immediateBuffer = ImmediateBuffer;
-            WriteRawLittleEndian32(value, ref immediateBuffer);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        private void WriteRawLittleEndian32(uint value, ref Span<byte> immediateBuffer)
         {
             if (position + 4 > limit)
             {
-                SlowWriteRawLittleEndian32(value, ref immediateBuffer);
+                WriteRawByte((byte) value);
+                WriteRawByte((byte) (value >> 8));
+                WriteRawByte((byte) (value >> 16));
+                WriteRawByte((byte) (value >> 24));
             }
             else
             {
-                BinaryPrimitives.WriteUInt32LittleEndian(immediateBuffer.Slice(position, 4), value);
-                position += 4;
+                buffer[position++] = ((byte) value);
+                buffer[position++] = ((byte) (value >> 8));
+                buffer[position++] = ((byte) (value >> 16));
+                buffer[position++] = ((byte) (value >> 24));
             }
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        [SecurityCritical]
-        private void SlowWriteRawLittleEndian32(uint value, ref Span<byte> immediateBuffer)
-        {
-            WriteRawByte((byte)value, ref immediateBuffer);
-            WriteRawByte((byte)(value >> 8), ref immediateBuffer);
-            WriteRawByte((byte)(value >> 16), ref immediateBuffer);
-            WriteRawByte((byte)(value >> 24), ref immediateBuffer);
-        }
-
-        [SecurityCritical]
         internal void WriteRawLittleEndian64(ulong value)
-        {
-            var immediateBuffer = ImmediateBuffer;
-            WriteRawLittleEndian64(value, ref immediateBuffer);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        private void WriteRawLittleEndian64(ulong value, ref Span<byte> immediateBuffer)
         {
             if (position + 8 > limit)
             {
-                SlowWriteRawLittleEndian64(value, ref immediateBuffer);
+                WriteRawByte((byte) value);
+                WriteRawByte((byte) (value >> 8));
+                WriteRawByte((byte) (value >> 16));
+                WriteRawByte((byte) (value >> 24));
+                WriteRawByte((byte) (value >> 32));
+                WriteRawByte((byte) (value >> 40));
+                WriteRawByte((byte) (value >> 48));
+                WriteRawByte((byte) (value >> 56));
             }
             else
             {
-                BinaryPrimitives.WriteUInt64LittleEndian(immediateBuffer.Slice(position, 8), value);
-                position += 8;
+                buffer[position++] = ((byte) value);
+                buffer[position++] = ((byte) (value >> 8));
+                buffer[position++] = ((byte) (value >> 16));
+                buffer[position++] = ((byte) (value >> 24));
+                buffer[position++] = ((byte) (value >> 32));
+                buffer[position++] = ((byte) (value >> 40));
+                buffer[position++] = ((byte) (value >> 48));
+                buffer[position++] = ((byte) (value >> 56));
             }
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        [SecurityCritical]
-        private void SlowWriteRawLittleEndian64(ulong value, ref Span<byte> immediateBuffer)
-        {
-            WriteRawByte((byte)value, ref immediateBuffer);
-            WriteRawByte((byte)(value >> 8), ref immediateBuffer);
-            WriteRawByte((byte)(value >> 16), ref immediateBuffer);
-            WriteRawByte((byte)(value >> 24), ref immediateBuffer);
-            WriteRawByte((byte)(value >> 32), ref immediateBuffer);
-            WriteRawByte((byte)(value >> 40), ref immediateBuffer);
-            WriteRawByte((byte)(value >> 48), ref immediateBuffer);
-            WriteRawByte((byte)(value >> 56), ref immediateBuffer);
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        [SecurityCritical]
         internal void WriteRawByte(byte value)
-        {
-            var immediateBuffer = ImmediateBuffer;
-            WriteRawByte(value, ref immediateBuffer);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        private void WriteRawByte(byte value, ref Span<byte> immediateBuffer)
         {
             if (position == limit)
             {
-                RefreshBuffer(ref immediateBuffer);
+                RefreshBuffer();
             }
 
-            immediateBuffer[position++] = value;
+            buffer[position++] = value;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        internal void WriteRawByte(uint value, ref Span<byte> immediateBuffer) => WriteRawByte((byte)value, ref immediateBuffer);
+        internal void WriteRawByte(uint value)
+        {
+            WriteRawByte((byte) value);
+        }
+
+        /// <summary>
+        /// Writes out an array of bytes.
+        /// </summary>
+        internal void WriteRawBytes(byte[] value)
+        {
+            WriteRawBytes(value, 0, value.Length);
+        }
 
         /// <summary>
         /// Writes out part of an array of bytes.
         /// </summary>
-        [SecurityCritical]
-        internal void WriteRawBytes(ReadOnlySpan<byte> value)
+        internal void WriteRawBytes(byte[] value, int offset, int length)
         {
-            var immediateBuffer = ImmediateBuffer;
-            WriteRawBytes(value, ref immediateBuffer);
-        }
-
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [SecurityCritical]
-        internal void WriteRawBytes(ReadOnlySpan<byte> value, ref Span<byte> immediateBuffer)
-        {
-            if (limit - position >= value.Length)
+            if (limit - position >= length)
             {
-                value.CopyTo(immediateBuffer.Slice(position));
+                ByteArray.Copy(value, offset, buffer, position, length);
                 // We have room in the current buffer.
-                position += value.Length;
+                position += length;
             }
             else
             {
-                SlowWriteRawBytes(value, ref immediateBuffer);
-            }
-        }
+                // Write extends past current buffer.  Fill the rest of this buffer and
+                // flush.
+                int bytesWritten = limit - position;
+                ByteArray.Copy(value, offset, buffer, position, bytesWritten);
+                offset += bytesWritten;
+                length -= bytesWritten;
+                position = limit;
+                RefreshBuffer();
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        [SecurityCritical]
-        private void SlowWriteRawBytes(ReadOnlySpan<byte> value, ref Span<byte> immediateBuffer)
-        {
-            int offset = 0;
-            int length = value.Length;
-            // Write extends past current buffer.  Fill the rest of this buffer and
-            // flush.
-            int bytesWritten = limit - position;
-            value.Slice(0, bytesWritten).CopyTo(immediateBuffer.Slice(position));
-            offset += bytesWritten;
-            length -= bytesWritten;
-            position = limit;
-            RefreshBuffer(ref immediateBuffer);
-
-            // Now deal with the rest.
-            // Since we have an output stream, this is our buffer
-            // and buffer offset == 0
-            if (length <= limit)
-            {
-                // Fits in new buffer.
-                value.Slice(offset, length).CopyTo(immediateBuffer);
-                position = length;
-            }
-            else if (output != null)
-            {
-                // Write is very big.  Let's do it all at once.
-#if NETCOREAPP2_1
-                output.Write(value.Slice(offset, length));
-#else
-                var temp = ArrayPool<byte>.Shared.Rent(length);
-                try
+                // Now deal with the rest.
+                // Since we have an output stream, this is our buffer
+                // and buffer offset == 0
+                if (length <= limit)
                 {
-                    value.Slice(offset, length).CopyTo(temp);
-                    output.Write(temp, 0, length);
+                    // Fits in new buffer.
+                    ByteArray.Copy(value, offset, buffer, 0, length);
+                    position = length;
                 }
-                finally
+                else
                 {
-                    ArrayPool<byte>.Shared.Return(temp);
+                    // Write is very big.  Let's do it all at once.
+                    output.Write(value, offset, length);
                 }
-#endif
-            }
-            else
-            {
-                nativeOutput.Write(value.Slice(offset, length));
-                nativeOutputPosition += length;
-                nativeBuffer = nativeOutput.GetMemory();
-                immediateBuffer = nativeBuffer.Span;
-                limit = nativeBuffer.Length;
             }
         }
 
@@ -1242,7 +642,6 @@ namespace Google.Protobuf
         /// sign-extended to 64 bits to be varint encoded, thus always taking
         /// 10 bytes on the wire.)
         /// </remarks>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static uint EncodeZigZag32(int n)
         {
             // Note:  the right-shift must be arithmetic
@@ -1258,39 +657,23 @@ namespace Google.Protobuf
         /// sign-extended to 64 bits to be varint encoded, thus always taking
         /// 10 bytes on the wire.)
         /// </remarks>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static ulong EncodeZigZag64(long n) => (ulong) ((n << 1) ^ (n >> 63));
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        [SecurityCritical]
-        private void RefreshBuffer(ref Span<byte> immediateBuffer)
+        internal static ulong EncodeZigZag64(long n)
         {
-            if (output != null)
-            {
-                // Since we have an output stream, this is our buffer
-                // and buffer offset == 0
-#if NETCOREAPP2_1
-                output.Write(immediateBuffer.Slice(0, position));
-#else
-                //We always have buffer when using output
-                output.Write(buffer, 0, position);
-#endif
-                position = 0;
-            }
-            else if (nativeOutput != null)
-            {
-                nativeOutput.Advance(position);
-                nativeOutputPosition += position;
-                nativeBuffer = nativeOutput.GetMemory();
-                immediateBuffer = nativeBuffer.Span;
-                position = 0;
-                limit = nativeBuffer.Length;
-            }
-            else
+            return (ulong) ((n << 1) ^ (n >> 63));
+        }
+
+        private void RefreshBuffer()
+        {
+            if (output == null)
             {
                 // We're writing to a single buffer.
                 throw new OutOfSpaceException();
             }
+
+            // Since we have an output stream, this is our buffer
+            // and buffer offset == 0
+            output.Write(buffer, 0, position);
+            position = 0;
         }
 
         /// <summary>
@@ -1320,11 +703,9 @@ namespace Google.Protobuf
         /// fail. It is recommend that you not call any other methods after this.
         /// </para>
         /// </remarks>
-        [SecuritySafeCritical]
         public void Dispose()
         {
-            var immediateBuffer = ImmediateBuffer;
-            Flush(ref immediateBuffer);
+            Flush();
             if (!leaveOpen)
             {
                 output.Dispose();
@@ -1334,23 +715,11 @@ namespace Google.Protobuf
         /// <summary>
         /// Flushes any buffered data to the underlying stream (if there is one).
         /// </summary>
-        [SecuritySafeCritical]
         public void Flush()
-        {
-            var immediateBuffer = ImmediateBuffer;
-            Flush(ref immediateBuffer);
-        }
-
-        /// <summary>
-        /// This supports the Protocol Buffers infrastructure and is not meant to be used directly from your code.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [SecurityCritical]
-        public void Flush(ref Span<byte> immediateBuffer)
         {
             if (output != null)
             {
-                RefreshBuffer(ref immediateBuffer);
+                RefreshBuffer();
             }
         }
 
@@ -1374,10 +743,9 @@ namespace Google.Protobuf
         /// </summary>
         public int SpaceLeft
         {
-            [SecuritySafeCritical]
             get
             {
-                if (output == null && nativeOutput == null)
+                if (output == null)
                 {
                     return limit - position;
                 }
