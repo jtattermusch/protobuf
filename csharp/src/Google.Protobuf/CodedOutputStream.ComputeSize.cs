@@ -31,7 +31,6 @@
 #endregion
 
 using System;
-using System.Runtime.CompilerServices;
 
 namespace Google.Protobuf
 {
@@ -47,63 +46,42 @@ namespace Google.Protobuf
         /// Computes the number of bytes that would be needed to encode a
         /// double field, including the tag.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeDoubleSize(double value) => LittleEndian64Size;
-
-        /// <summary>
-        /// Computes the number of bytes that would be needed to encode a
-        /// wrapped double field, including the tag.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeWrappedDoubleSize(double? value) => value.Value == default(double) ? 1 : 2 + LittleEndian64Size;
+        public static int ComputeDoubleSize(double value)
+        {
+            return LittleEndian64Size;
+        }
 
         /// <summary>
         /// Computes the number of bytes that would be needed to encode a
         /// float field, including the tag.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeFloatSize(float value) => LittleEndian32Size;
-
-        /// <summary>
-        /// Computes the number of bytes that would be needed to encode a
-        /// float field, including the tag.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeWrappedFloatSize(float? value) => value.Value == default(float) ? 1 : 2 + LittleEndian32Size;
+        public static int ComputeFloatSize(float value)
+        {
+            return LittleEndian32Size;
+        }
 
         /// <summary>
         /// Computes the number of bytes that would be needed to encode a
         /// uint64 field, including the tag.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeUInt64Size(ulong value) => ComputeRawVarint64Size(value);
-
-        /// <summary>
-        /// Computes the number of bytes that would be needed to encode a
-        /// wrapped uint64 field, including the tag.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeWrappedUInt64Size(ulong? value) => value.Value == default(ulong) ? 1 : 2 + ComputeRawVarint64Size(value.Value);
+        public static int ComputeUInt64Size(ulong value)
+        {
+            return ComputeRawVarint64Size(value);
+        }
 
         /// <summary>
         /// Computes the number of bytes that would be needed to encode an
         /// int64 field, including the tag.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeInt64Size(long value) => ComputeRawVarint64Size((ulong) value);
-
-        /// <summary>
-        /// Computes the number of bytes that would be needed to encode an
-        /// wrapped int64 field, including the tag.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeWrappedInt64Size(long? value) => value.Value == default(long) ? 1 : 2 + ComputeRawVarint64Size((ulong)value.Value);
+        public static int ComputeInt64Size(long value)
+        {
+            return ComputeRawVarint64Size((ulong) value);
+        }
 
         /// <summary>
         /// Computes the number of bytes that would be needed to encode an
         /// int32 field, including the tag.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int ComputeInt32Size(int value)
         {
             if (value >= 0)
@@ -118,60 +96,36 @@ namespace Google.Protobuf
         }
 
         /// <summary>
-        /// Computes the number of bytes that would be needed to encode an
-        /// wrapped int32 field, including the tag.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeWrappedInt32Size(int? value)
-        {
-            if (value.Value == 0)
-            {
-                return 1;
-            }
-            else if (value.Value > 0)
-            {
-                return 2 + ComputeRawVarint32Size((uint)value.Value);
-            }
-            else
-            {
-                // Must sign-extend.
-                return 12;
-            }
-        }
-
-        /// <summary>
         /// Computes the number of bytes that would be needed to encode a
         /// fixed64 field, including the tag.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeFixed64Size(ulong value) => LittleEndian64Size;
+        public static int ComputeFixed64Size(ulong value)
+        {
+            return LittleEndian64Size;
+        }
 
         /// <summary>
         /// Computes the number of bytes that would be needed to encode a
         /// fixed32 field, including the tag.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeFixed32Size(uint value) => LittleEndian32Size;
+        public static int ComputeFixed32Size(uint value)
+        {
+            return LittleEndian32Size;
+        }
 
         /// <summary>
         /// Computes the number of bytes that would be needed to encode a
         /// bool field, including the tag.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeBoolSize(bool value) => 1;
-
-        /// <summary>
-        /// Computes the number of bytes that would be needed to encode a
-        /// wrapped bool field, including the tag.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeWrappedBoolSize(bool? value) => value.Value == default(bool) ? 1 : 3;
+        public static int ComputeBoolSize(bool value)
+        {
+            return 1;
+        }
 
         /// <summary>
         /// Computes the number of bytes that would be needed to encode a
         /// string field, including the tag.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int ComputeStringSize(String value)
         {
             int byteArraySize = Utf8Encoding.GetByteCount(value);
@@ -180,30 +134,17 @@ namespace Google.Protobuf
 
         /// <summary>
         /// Computes the number of bytes that would be needed to encode a
-        /// wrapped string field, including the tag.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeWrappedStringSize(String value)
-        {
-            if (value == String.Empty)
-                return 1;
-
-            int byteArraySize = Utf8Encoding.GetByteCount(value);
-            var wrappedByteArraySize = ComputeLengthSize(byteArraySize) + byteArraySize;
-            return 1 + ComputeLengthSize(wrappedByteArraySize) + wrappedByteArraySize;
-        }
-
-        /// <summary>
-        /// Computes the number of bytes that would be needed to encode a
         /// group field, including the tag.
         /// </summary>
-        public static int ComputeGroupSize(IMessage value) => value.CalculateSize();
+        public static int ComputeGroupSize(IMessage value)
+        {
+            return value.CalculateSize();
+        }
 
         /// <summary>
         /// Computes the number of bytes that would be needed to encode an
         /// embedded message field, including the tag.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int ComputeMessageSize(IMessage value)
         {
             int size = value.CalculateSize();
@@ -214,84 +155,79 @@ namespace Google.Protobuf
         /// Computes the number of bytes that would be needed to encode a
         /// bytes field, including the tag.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeBytesSize(ByteString value) => ComputeLengthSize(value.Length) + value.Length;
-
-        /// <summary>
-        /// Computes the number of bytes that would be needed to encode a
-        /// wrapped bytes field, including the tag.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeWrappedBytesSize(ByteString value)
+        public static int ComputeBytesSize(ByteString value)
         {
-            if (value.IsEmpty)
-                return 1;
-
-            var wrappedBytesSize = ComputeLengthSize(value.Length) + value.Length;
-            return 1 + ComputeLengthSize(wrappedBytesSize) + wrappedBytesSize;
+            return ComputeLengthSize(value.Length) + value.Length;
         }
 
         /// <summary>
         /// Computes the number of bytes that would be needed to encode a
         /// uint32 field, including the tag.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeUInt32Size(uint value) => ComputeRawVarint32Size(value);
-
-        /// <summary>
-        /// Computes the number of bytes that would be needed to encode a
-        /// wrapped uint32 field, including the tag.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeWrappedUInt32Size(uint? value) => value.Value == default(uint) ? 1 : 2 + ComputeRawVarint32Size(value.Value);
+        public static int ComputeUInt32Size(uint value)
+        {
+            return ComputeRawVarint32Size(value);
+        }
 
         /// <summary>
         /// Computes the number of bytes that would be needed to encode a
         /// enum field, including the tag. The caller is responsible for
         /// converting the enum value to its numeric value.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeEnumSize(int value) => ComputeInt32Size(value);
+        public static int ComputeEnumSize(int value)
+        {
+            // Currently just a pass-through, but it's nice to separate it logically.
+            return ComputeInt32Size(value);
+        }
 
         /// <summary>
         /// Computes the number of bytes that would be needed to encode an
         /// sfixed32 field, including the tag.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeSFixed32Size(int value) => LittleEndian32Size;
+        public static int ComputeSFixed32Size(int value)
+        {
+            return LittleEndian32Size;
+        }
 
         /// <summary>
         /// Computes the number of bytes that would be needed to encode an
         /// sfixed64 field, including the tag.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeSFixed64Size(long value) => LittleEndian64Size;
+        public static int ComputeSFixed64Size(long value)
+        {
+            return LittleEndian64Size;
+        }
 
         /// <summary>
         /// Computes the number of bytes that would be needed to encode an
         /// sint32 field, including the tag.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeSInt32Size(int value) => ComputeRawVarint32Size(EncodeZigZag32(value));
+        public static int ComputeSInt32Size(int value)
+        {
+            return ComputeRawVarint32Size(EncodeZigZag32(value));
+        }
 
         /// <summary>
         /// Computes the number of bytes that would be needed to encode an
         /// sint64 field, including the tag.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeSInt64Size(long value) => ComputeRawVarint64Size(EncodeZigZag64(value));
+        public static int ComputeSInt64Size(long value)
+        {
+            return ComputeRawVarint64Size(EncodeZigZag64(value));
+        }
 
         /// <summary>
         /// Computes the number of bytes that would be needed to encode a length,
-        /// as written by <see cref="WriteLength(int)"/>.
+        /// as written by <see cref="WriteLength"/>.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeLengthSize(int length) => ComputeRawVarint32Size((uint) length);
+        public static int ComputeLengthSize(int length)
+        {
+            return ComputeRawVarint32Size((uint) length);
+        }
 
         /// <summary>
         /// Computes the number of bytes that would be needed to encode a varint.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int ComputeRawVarint32Size(uint value)
         {
             if ((value & (0xffffffff << 7)) == 0)
@@ -316,7 +252,6 @@ namespace Google.Protobuf
         /// <summary>
         /// Computes the number of bytes that would be needed to encode a varint.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int ComputeRawVarint64Size(ulong value)
         {
             if ((value & (0xffffffffffffffffL << 7)) == 0)
@@ -361,7 +296,9 @@ namespace Google.Protobuf
         /// <summary>
         /// Computes the number of bytes that would be needed to encode a tag.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int ComputeTagSize(int fieldNumber) => ComputeRawVarint32Size(WireFormat.MakeTag(fieldNumber, 0));
+        public static int ComputeTagSize(int fieldNumber)
+        {
+            return ComputeRawVarint32Size(WireFormat.MakeTag(fieldNumber, 0));
+        }
     }
 }
