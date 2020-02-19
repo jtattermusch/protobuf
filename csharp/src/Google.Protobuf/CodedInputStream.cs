@@ -34,6 +34,7 @@ using Google.Protobuf.Collections;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Buffers;
 
 namespace Google.Protobuf
 {
@@ -219,6 +220,27 @@ namespace Google.Protobuf
         {
             // Note: we may want an overload accepting leaveOpen
             return new CodedInputStream(input, new byte[BufferSize], 0, 0, sizeLimit, recursionLimit, false);
+        }
+
+        public void PopulateCodedInputReader(ref CodedInputReader readerToPopulate)
+        {
+            // TODO: implement
+            if (this.input != null)
+            {
+                throw new ArgumentException("Stream not supported");
+            }
+
+            ReadOnlySequence<byte> inputSequence = new ReadOnlySequence<byte>(buffer);
+            
+            // TODO: throw if we have non-default value of some of the args.
+            //his.buffer = buffer;
+            //this.bufferPos = bufferPos;
+            //this.bufferSize = bufferSize;
+            //this.sizeLimit = DefaultSizeLimit;
+            //this.recursionLimit = DefaultRecursionLimit;
+            //this.leaveOpen = leaveOpen;
+
+            readerToPopulate = new CodedInputReader(inputSequence);
         }
 
         /// <summary>
