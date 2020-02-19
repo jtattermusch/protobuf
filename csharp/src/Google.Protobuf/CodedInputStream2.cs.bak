@@ -34,6 +34,7 @@ using Google.Protobuf.Collections;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Buffers;
 
 namespace Google.Protobuf
 {
@@ -66,55 +67,15 @@ namespace Google.Protobuf
 
         private ParserInternalState state;
 
-        // /// <summary>
-        // /// The index of the buffer at which we need to refill from the stream (if there is one).
-        // /// </summary>
-        // private int bufferSize;
-
-        // private int bufferSizeAfterLimit = 0;
-        // /// <summary>
-        // /// The position within the current buffer (i.e. the next byte to read)
-        // /// </summary>
-        // private int bufferPos = 0;
-
         /// <summary>
         /// The stream to read further input from, or null if the byte array buffer was provided
         /// directly on construction, with no further data available.
         /// </summary>
         private readonly Stream input;
 
-        // /// <summary>
-        // /// The last tag we read. 0 indicates we've read to the end of the stream
-        // /// (or haven't read anything yet).
-        // /// </summary>
-        // private uint lastTag = 0;
-
-        // /// <summary>
-        // /// The next tag, used to store the value read by PeekTag.
-        // /// </summary>
-        // private uint nextTag = 0;
-        // private bool hasNextTag = false;
-
         internal const int DefaultRecursionLimit = 100;
         internal const int DefaultSizeLimit = Int32.MaxValue;
         internal const int BufferSize = 4096;
-
-        // /// <summary>
-        // /// The total number of bytes read before the current buffer. The
-        // /// total bytes read up to the current position can be computed as
-        // /// totalBytesRetired + bufferPos.
-        // /// </summary>
-        // private int totalBytesRetired = 0;
-
-        // /// <summary>
-        // /// The absolute position of the end of the current message.
-        // /// </summary> 
-        // private int currentLimit = int.MaxValue;
-
-        // private int recursionDepth = 0;
-
-        // private readonly int recursionLimit;
-        // private readonly int sizeLimit;
 
         #region Construction
         // Note that the checks are performed such that we don't end up checking obviously-valid things
@@ -176,7 +137,6 @@ namespace Google.Protobuf
             this.state.bufferSize = bufferSize;
             this.state.sizeLimit = DefaultSizeLimit;
             this.state.recursionLimit = DefaultRecursionLimit;
-            // TODO: get rid of the delegate allocation..
             this.state.refillBufferDelegate = new ParserInternalState.RefillBufferDelegate(RefillBufferHandler);
             this.leaveOpen = leaveOpen;
 
@@ -355,7 +315,6 @@ namespace Google.Protobuf
         /// <returns>The next field tag, or 0 for end of stream. (0 is never a valid tag.)</returns>
         public uint ReadTag()
         {
-            // TODO: move the parsing logic elsewhere
             if (state.hasNextTag)
             {
                 state.lastTag = state.nextTag;
@@ -384,7 +343,8 @@ namespace Google.Protobuf
                     {
                         // Nope, rewind and go the potentially slow route.
                         state.bufferPos -= 2;
-                        state.lastTag = ReadRawVarint32();
+                        var span = new ReadOnlySpan<byte>(buffer);
+                        state.lastTag = ParsingPrimitivesClassic.ParseRawVarint32(ref span, ref state);
                     }
                 }
             }
@@ -395,8 +355,9 @@ namespace Google.Protobuf
                     state.lastTag = 0;
                     return 0;
                 }
-
-                state.lastTag = ReadRawVarint32();
+                
+                var span = new ReadOnlySpan<byte>(buffer);
+                state.lastTag = ParsingPrimitivesClassic.ParseRawVarint32(ref span, ref state);
             }
             if (WireFormat.GetTagFieldNumber(state.lastTag) == 0)
             {
@@ -448,7 +409,7 @@ namespace Google.Protobuf
                     SkipRawBytes(length);
                     break;
                 case WireFormat.WireType.Varint:
-                    ReadRawVarint32();
+                    ReadInt32();
                     break;
             }
         }
@@ -514,7 +475,8 @@ namespace Google.Protobuf
         /// </summary>
         public ulong ReadUInt64()
         {
-            return ReadRawVarint64();
+            var span = new ReadOnlySpan<byte>(buffer);
+            return ParsingPrimitivesClassic.ParseRawVarint64(ref span, ref state);
         }
 
         /// <summary>
@@ -522,7 +484,8 @@ namespace Google.Protobuf
         /// </summary>
         public long ReadInt64()
         {
-            return (long) ReadRawVarint64();
+            var span = new ReadOnlySpan<byte>(buffer);
+            return (long) ParsingPrimitivesClassic.ParseRawVarint64(ref span, ref state);
         }
 
         /// <summary>
@@ -530,7 +493,8 @@ namespace Google.Protobuf
         /// </summary>
         public int ReadInt32()
         {
-            return (int) ReadRawVarint32();
+            var span = new ReadOnlySpan<byte>(buffer);
+            return (int) ParsingPrimitivesClassic.ParseRawVarint32(ref span, ref state);
         }
 
         /// <summary>
@@ -538,7 +502,8 @@ namespace Google.Protobuf
         /// </summary>
         public ulong ReadFixed64()
         {
-            return ReadRawLittleEndian64();
+            var span = new ReadOnlySpan<byte>(buffer);
+            return ParsingPrimitivesClassic.ParseRawLittleEndian64(ref span, ref state);
         }
 
         /// <summary>
@@ -546,7 +511,8 @@ namespace Google.Protobuf
         /// </summary>
         public uint ReadFixed32()
         {
-            return ReadRawLittleEndian32();
+            var span = new ReadOnlySpan<byte>(buffer);
+            return ParsingPrimitivesClassic.ParseRawLittleEndian32(ref span, ref state);
         }
 
         /// <summary>
@@ -554,7 +520,8 @@ namespace Google.Protobuf
         /// </summary>
         public bool ReadBool()
         {
-            return ReadRawVarint64() != 0;
+            var span = new ReadOnlySpan<byte>(buffer);
+            return ParsingPrimitivesClassic.ParseRawVarint64(ref span, ref state) != 0;
         }
 
         /// <summary>
@@ -643,7 +610,8 @@ namespace Google.Protobuf
         /// </summary>   
         public uint ReadUInt32()
         {
-            return ReadRawVarint32();
+            var span = new ReadOnlySpan<byte>(buffer);
+            return ParsingPrimitivesClassic.ParseRawVarint32(ref span, ref state);
         }
 
         /// <summary>
@@ -652,7 +620,8 @@ namespace Google.Protobuf
         public int ReadEnum()
         {
             // Currently just a pass-through, but it's nice to separate it logically from WriteInt32.
-            return (int) ReadRawVarint32();
+            var span = new ReadOnlySpan<byte>(buffer);
+            return (int) ParsingPrimitivesClassic.ParseRawVarint32(ref span, ref state);
         }
 
         /// <summary>
@@ -660,7 +629,8 @@ namespace Google.Protobuf
         /// </summary>   
         public int ReadSFixed32()
         {
-            return (int) ReadRawLittleEndian32();
+            var span = new ReadOnlySpan<byte>(buffer);
+            return (int) ParsingPrimitivesClassic.ParseRawLittleEndian32(ref span, ref state);
         }
 
         /// <summary>
@@ -668,7 +638,8 @@ namespace Google.Protobuf
         /// </summary>   
         public long ReadSFixed64()
         {
-            return (long) ReadRawLittleEndian64();
+            var span = new ReadOnlySpan<byte>(buffer);
+            return (long) ParsingPrimitivesClassic.ParseRawLittleEndian64(ref span, ref state);
         }
 
         /// <summary>
@@ -676,7 +647,8 @@ namespace Google.Protobuf
         /// </summary>   
         public int ReadSInt32()
         {
-            return DecodeZigZag32(ReadRawVarint32());
+            var span = new ReadOnlySpan<byte>(buffer);
+            return DecodeZigZag32(ParsingPrimitivesClassic.ParseRawVarint32(ref span, ref state));
         }
 
         /// <summary>
@@ -684,7 +656,8 @@ namespace Google.Protobuf
         /// </summary>   
         public long ReadSInt64()
         {
-            return DecodeZigZag64(ReadRawVarint64());
+            var span = new ReadOnlySpan<byte>(buffer);
+            return DecodeZigZag64(ParsingPrimitivesClassic.ParseRawVarint64(ref span, ref state));
         }
 
         /// <summary>
@@ -696,7 +669,8 @@ namespace Google.Protobuf
         /// </remarks>
         public int ReadLength()
         {
-            return (int) ReadRawVarint32();
+            var span = new ReadOnlySpan<byte>(buffer);
+            return (int) ParsingPrimitivesClassic.ParseRawVarint32(ref span, ref state);
         }
 
         /// <summary>
@@ -712,6 +686,48 @@ namespace Google.Protobuf
                 return true;
             }
             return false;
+        }
+
+        /// <summary>
+        /// Reads a varint from the input one byte at a time, so that it does not
+        /// read any bytes after the end of the varint. If you simply wrapped the
+        /// stream in a CodedInputStream and used ReadRawVarint32(Stream)
+        /// then you would probably end up reading past the end of the varint since
+        /// CodedInputStream buffers its input.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        internal static uint ReadRawVarint32(Stream input)
+        {
+            int result = 0;
+            int offset = 0;
+            for (; offset < 32; offset += 7)
+            {
+                int b = input.ReadByte();
+                if (b == -1)
+                {
+                    throw InvalidProtocolBufferException.TruncatedMessage();
+                }
+                result |= (b & 0x7f) << offset;
+                if ((b & 0x80) == 0)
+                {
+                    return (uint) result;
+                }
+            }
+            // Keep reading up to 64 bits.
+            for (; offset < 64; offset += 7)
+            {
+                int b = input.ReadByte();
+                if (b == -1)
+                {
+                    throw InvalidProtocolBufferException.TruncatedMessage();
+                }
+                if ((b & 0x80) == 0)
+                {
+                    return (uint) result;
+                }
+            }
+            throw InvalidProtocolBufferException.MalformedVarint();
         }
 
         internal static float? ReadFloatWrapperLittleEndian(CodedInputStream input)
@@ -972,59 +988,6 @@ namespace Google.Protobuf
         #region Underlying reading primitives
 
         /// <summary>
-        /// Reads a raw Varint from the stream.  If larger than 32 bits, discard the upper bits.
-        /// This method is optimised for the case where we've got lots of data in the buffer.
-        /// That means we can check the size just once, then just read directly from the buffer
-        /// without constant rechecking of the buffer length.
-        /// </summary>
-        internal uint ReadRawVarint32()
-        {
-            var span = new ReadOnlySpan<byte>(buffer);
-            return ParsingPrimitivesClassic.ParseRawVarint32(ref span, ref state);
-        }
-
-        /// <summary>
-        /// Reads a varint from the input one byte at a time, so that it does not
-        /// read any bytes after the end of the varint. If you simply wrapped the
-        /// stream in a CodedInputStream and used ReadRawVarint32(Stream)
-        /// then you would probably end up reading past the end of the varint since
-        /// CodedInputStream buffers its input.
-        /// </summary>
-        /// <param name="input"></param>
-        /// <returns></returns>
-        internal static uint ReadRawVarint32(Stream input)
-        {
-            return ParsingPrimitivesClassic.ReadRawVarint32(input);
-        }
-
-        /// <summary>
-        /// Reads a raw varint from the stream.
-        /// </summary>
-        internal ulong ReadRawVarint64()
-        {
-            var span = new ReadOnlySpan<byte>(buffer);
-            return ParsingPrimitivesClassic.ParseRawVarint64(ref span, ref state);
-        }
-
-        /// <summary>
-        /// Reads a 32-bit little-endian integer from the stream.
-        /// </summary>
-        internal uint ReadRawLittleEndian32()
-        {
-            var span = new ReadOnlySpan<byte>(buffer);
-            return ParsingPrimitivesClassic.ParseRawLittleEndian32(ref span, ref state);
-        }
-
-        /// <summary>
-        /// Reads a 64-bit little-endian integer from the stream.
-        /// </summary>
-        internal ulong ReadRawLittleEndian64()
-        {
-            var span = new ReadOnlySpan<byte>(buffer);
-            return ParsingPrimitivesClassic.ParseRawLittleEndian64(ref span, ref state);
-        }
-
-        /// <summary>
         /// Decode a 32-bit value with ZigZag encoding.
         /// </summary>
         /// <remarks>
@@ -1035,7 +998,6 @@ namespace Google.Protobuf
         /// </remarks>
         internal static int DecodeZigZag32(uint n)
         {
-            // TODO: move to parsing primitives
             return (int)(n >> 1) ^ -(int)(n & 1);
         }
 
@@ -1050,7 +1012,6 @@ namespace Google.Protobuf
         /// </remarks>
         internal static long DecodeZigZag64(ulong n)
         {
-            // TODO: move to parsing primitives
             return (long)(n >> 1) ^ -(long)(n & 1);
         }
         #endregion
@@ -1203,7 +1164,6 @@ namespace Google.Protobuf
         /// </exception>
         internal byte ReadRawByte()
         {
-            // TODO: we don't need this method anymore?
             if (state.bufferPos == state.bufferSize)
             {
                 RefillBuffer(true);
