@@ -97,6 +97,23 @@ namespace Google.Protobuf.Benchmarks
         }
 
         [Benchmark]
+        public ulong ParseFromSpan_ParseContextWithPosition()
+        {
+            SequenceReader<byte> reader = new SequenceReader<byte>(manyPrimitiveFieldsReadOnlySequence);
+            ParseContextWithPosition context = new ParseContextWithPosition();
+            context.Buffer = new Span<byte>(manyPrimitiveFieldsByteArray);
+            context.Position = 0;
+
+            ulong sum = 0;
+            for (int i = 0; i < IterationCount; i++)
+            {
+                ulong result = ParsingPrimitives.ParseRawVarint64_ParseContextWithPosition(ref context);
+                sum += result;
+            }
+            return sum;
+        }
+
+        [Benchmark]
         public ulong ParseFromByteArray_PositionIsLocalVariable()
         {
             byte[] bufferByteArray = manyPrimitiveFieldsByteArray;
