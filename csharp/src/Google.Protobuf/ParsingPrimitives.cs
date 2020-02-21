@@ -82,7 +82,7 @@ namespace Google.Protobuf
         //TODO: other version that uses SequenceReader...
         public static ulong ParseRawVarint64_WithReader(ref SequenceReader<byte> reader)
         {
-            var current = reader.CurrentSpan;
+            var current = reader.UnreadSpan;
 
             int bufferPos = 0;
             ulong result = current[bufferPos++];
