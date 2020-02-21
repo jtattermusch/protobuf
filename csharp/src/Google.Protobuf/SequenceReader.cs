@@ -48,7 +48,7 @@ namespace Google.Protobuf
     /// https://github.com/dotnet/runtime/blob/071da4c41aa808c949a773b92dca6f88de9d11f3/src/libraries/System.Memory/src/System/Buffers/SequenceReader.cs
     /// </summary>
     [SecuritySafeCritical]
-    internal ref partial struct SequenceReader<T> where T : IEquatable<T>
+    public ref partial struct SequenceReader<T> where T : IEquatable<T>
     {
         private SequencePosition _currentPosition;
         private SequencePosition _nextPosition;
