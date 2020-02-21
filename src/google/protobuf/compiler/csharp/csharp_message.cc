@@ -696,6 +696,7 @@ void MessageGenerator::GenerateMergeFromInput(io::Printer* printer, bool use_buf
     printer->Print("public void MergeFrom(pb::CodedInputStream input) {\n");
   }
   printer->Indent();
+  if (use_buffer_serialization) {
   printer->Print(
     "uint tag;\n"
     "while ((tag = input.ReadTag()) != 0) {\n"
@@ -773,6 +774,11 @@ void MessageGenerator::GenerateMergeFromInput(io::Printer* printer, bool use_buf
   printer->Print("}\n"); // switch
   printer->Outdent();
   printer->Print("}\n"); // while
+  } else {
+    printer->Print("pb::CodedInputReader reader = default(pb::CodedInputReader);\n");
+    printer->Print("input.PopulateCodedInputReader(ref reader);\n");
+    printer->Print("MergeFrom(ref reader);\n");
+  }
   printer->Outdent();
   printer->Print("}\n"); // method
   if (use_buffer_serialization) {
