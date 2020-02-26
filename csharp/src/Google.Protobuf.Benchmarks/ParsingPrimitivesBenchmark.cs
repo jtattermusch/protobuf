@@ -84,6 +84,20 @@ namespace Google.Protobuf.Benchmarks
         }
 
         [Benchmark]
+        public ulong ParseFromMemory()
+        {
+            Memory<byte> memory = new Memory<byte>(manyPrimitiveFieldsByteArray);
+            ulong sum = 0;
+            int bufferPos = 0;
+            for (int i = 0; i < IterationCount; i++)
+            {
+                bufferPos = ParsingPrimitives.ParseRawVarint64_FromMemory(bufferPos, ref memory, out ulong result);
+                sum += result;
+            }
+            return sum;
+        }
+
+        [Benchmark]
         public ulong ParseFromSpan_PositionKeptBySequenceReader()
         {
             SequenceReader<byte> reader = new SequenceReader<byte>(manyPrimitiveFieldsReadOnlySequence);

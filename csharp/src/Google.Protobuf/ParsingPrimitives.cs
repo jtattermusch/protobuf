@@ -79,6 +79,31 @@ namespace Google.Protobuf
             throw InvalidProtocolBufferException.MalformedVarint();
         }
 
+        public static int ParseRawVarint64_FromMemory(int bufferPos, ref Memory<byte> memory, out ulong result)
+        {
+            Span<byte> buffer = memory.Span;
+            result = buffer[bufferPos++];
+            if (result < 128)
+            {
+                return bufferPos;
+            }
+            result &= 0x7f;
+            int shift = 7;
+            do
+            {
+                byte b = buffer[bufferPos++];
+                result |= (ulong)(b & 0x7F) << shift;
+                if (b < 0x80)
+                {
+                    return bufferPos;
+                }
+                shift += 7;
+            }
+            while (shift < 64);
+
+            throw InvalidProtocolBufferException.MalformedVarint();
+        }
+
         //TODO: other version that uses SequenceReader...
         public static ulong ParseRawVarint64_WithReader(ref SequenceReader<byte> reader)
         {
