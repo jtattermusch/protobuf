@@ -97,8 +97,7 @@ namespace Google.Protobuf
 
 
         // similar to CodedInputStream.RefillBuffer
-
-        internal bool RefillBuffer(bool mustSucceed)
+        internal bool RefillBuffer()
         {
             // we should only refill if we're close enough to the end of the buffer
             int lookaheadRemaining = buffer.Length - bufferPos;
@@ -217,6 +216,7 @@ namespace Google.Protobuf
     {
         private ReadOnlySequence<byte>.Enumerator enumerator;
 
+        // TODO: add enumerator that can be filled from CodedInputStream
         public BufferSegmentEnumerator(ReadOnlySequence<byte> sequence)
         {
             enumerator = sequence.GetEnumerator();
