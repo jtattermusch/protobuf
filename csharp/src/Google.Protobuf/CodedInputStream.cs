@@ -236,9 +236,25 @@ namespace Google.Protobuf
             //his.buffer = buffer;
             //this.bufferPos = bufferPos;
             //this.bufferSize = bufferSize;
+            //this.bufferSizeAfterLimit .....
+
             //this.sizeLimit = DefaultSizeLimit;
             //this.recursionLimit = DefaultRecursionLimit;
             //this.leaveOpen = leaveOpen;
+            // currentLimit, recursionDepth, 
+
+
+            // buffer ParserContext that takes:
+            //   sizeLimit
+            //   recursionLimit
+            //   current span
+            //   current position in span
+            //   span size after limit
+            //   totalBytesRetired
+            //   currentDepth
+            //   function to get next span
+            //   arg for fucntion to get next span
+
 
             readerToPopulate = new CodedInputReader(inputSequence);
         }
