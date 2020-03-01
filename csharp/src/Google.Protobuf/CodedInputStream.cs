@@ -1195,21 +1195,21 @@ namespace Google.Protobuf
             }
         }
 
-        /// <summary>
-        /// Read one byte from the input.
-        /// </summary>
-        /// <exception cref="InvalidProtocolBufferException">
-        /// the end of the stream or the current limit was reached
-        /// </exception>
-        internal byte ReadRawByte()
-        {
-            // TODO: we don't need this method anymore?
-            if (state.bufferPos == state.bufferSize)
-            {
-                RefillBuffer(true);
-            }
-            return buffer[state.bufferPos++];
-        }
+        // /// <summary>
+        // /// Read one byte from the input.
+        // /// </summary>
+        // /// <exception cref="InvalidProtocolBufferException">
+        // /// the end of the stream or the current limit was reached
+        // /// </exception>
+        // internal byte ReadRawByte()
+        // {
+        //     // TODO: we don't need this method anymore?
+        //     if (state.bufferPos == state.bufferSize)
+        //     {
+        //         RefillBuffer(true);
+        //     }
+        //     return buffer[state.bufferPos++];
+        // }
 
         /// <summary>
         /// Reads a fixed size of bytes from the input.
