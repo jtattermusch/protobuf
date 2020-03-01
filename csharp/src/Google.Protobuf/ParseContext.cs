@@ -43,6 +43,9 @@ using Google.Protobuf.Collections;
 
 namespace Google.Protobuf
 {
+    // the idea of epsilon buffer is described here:
+    // https://github.com/protocolbuffers/protobuf/blob/743a4322ba8332d0b78e30a699e1f3538f8b2093/src/google/protobuf/parse_context.h#L108
+
     // type is supposed to be internal, but it is referenced from generated code, so must be public
     // users should never use it directly
     // this type is opaque
@@ -54,10 +57,14 @@ namespace Google.Protobuf
         private const int EpsilonBufferSize = 32;
         private const int MinLookaheadWindow = EpsilonBufferSize / 2;
 
-        internal ReadOnlySpan<byte> buffer;
+        internal ReadOnlySpan<byte> buffer; 
         internal int bufferPos;  // position within the buffer
         internal int bufferSize;   // size of the current buffer
-        internal int currentLimit;  // current limit inside the buffer
+
+        internal int currentLimit;
+
+        internal int totalBytesRetired;   // bytes consumed before start of current buffer.
+
         internal int recursionDepth;  // current recursion depth
         
         internal BufferSegmentEnumerator segmentEnumerator;
@@ -69,6 +76,7 @@ namespace Google.Protobuf
         internal ReadOnlySpan<byte> nextBuffer;
         internal int nextBufferStartPositionInEpsilon;
 
+        
 
 
         // TODO: figure out handling limit exactly
@@ -85,6 +93,19 @@ namespace Google.Protobuf
         internal readonly int sizeLimit;
         internal readonly int recursionLimit;
 
+        //internal ParseContext()
+        //{
+            
+            //this.reader = new SequenceReader<byte>(input);
+            //this.lastTag = 0;
+            //this.recursionDepth = 0;
+            //this.recursionLimit = recursionLimit;
+            //this.currentLimit = (int)this.reader.Length;
+            //this.decoder = null;
+        //    this.DiscardUnknownFields = false;
+        //    this.ExtensionRegistry = null;  
+        //}
+        
         /// <summary>
         /// Internal-only property; when set to true, unknown fields will be discarded while parsing.
         /// </summary>
@@ -117,10 +138,12 @@ namespace Google.Protobuf
                     int alreadyConsumedNextBufferBytes = bufferPos - nextBufferStartPositionInEpsilon;
                     nextBuffer.Slice(alreadyConsumedNextBufferBytes).CopyTo(epsilonBuffer.Slice(0, nextBuffer.Length - alreadyConsumedNextBufferBytes));
 
+                    totalBytesRetired += bufferPos;
                     buffer = epsilonBuffer;
                     bufferPos = 0;  // we basically just shifted the bytes to the start of epsilon buffer
                     bufferSize = nextBuffer.Length - alreadyConsumedNextBufferBytes;
                     currentLimit = -1;
+                    
 
                     currentlyInEpsilonBuffer = true;
                     nextBufferStartPositionInEpsilon = -1;
@@ -133,6 +156,7 @@ namespace Google.Protobuf
                 else 
                 {
                     // just start using the next buffer from the right position
+                    totalBytesRetired += bufferPos;
                     currentlyInEpsilonBuffer = false;
                     buffer = nextBuffer.Slice(bufferPos - nextBufferStartPositionInEpsilon);
                     bufferPos = 0;
@@ -156,6 +180,7 @@ namespace Google.Protobuf
                     // copy remaining bytes to epsilon buffer
                     buffer.Slice(bufferPos, remainingBytesInOldBuffer).CopyTo(epsilonBuffer.Slice(0, remainingBytesInOldBuffer));
 
+                    totalBytesRetired += bufferPos;
                     buffer = epsilonBuffer;
                     bufferPos = 0;
                     bufferSize = remainingBytesInOldBuffer;
@@ -176,6 +201,7 @@ namespace Google.Protobuf
                 if (remainingBytesInOldBuffer == 0 && nextBuffer.Length >= MinLookaheadWindow)
                 {
                     // we've exhausted the previous buffer completely and next buffer is big enough to switch over directly
+                    totalBytesRetired += bufferPos;
                     buffer = nextBuffer;
                     bufferPos = 0;
                     bufferSize = nextBuffer.Length;
@@ -196,6 +222,7 @@ namespace Google.Protobuf
                     int bytesFromNextBuffer = Math.Min(EpsilonBufferSize - remainingBytesInOldBuffer, nextBuffer.Length);
                     nextBuffer.Slice(0, bytesFromNextBuffer).CopyTo(epsilonBuffer.Slice(remainingBytesInOldBuffer, bytesFromNextBuffer));
 
+                    totalBytesRetired += bufferPos;
                     buffer = epsilonBuffer;
                     bufferPos = 0;
                     bufferSize = remainingBytesInOldBuffer + bytesFromNextBuffer;
@@ -207,30 +234,5 @@ namespace Google.Protobuf
                 }
             }
         }
-    }
-
-    // a general enumerator of buffer segments
-    // for now it can enumerate a ReadOnlySequence's segments only, but it can
-    // be extended to read from e.g. plain old Stream etc.
-    internal ref struct BufferSegmentEnumerator
-    {
-        private ReadOnlySequence<byte>.Enumerator enumerator;
-
-        // TODO: add enumerator that can be filled from CodedInputStream
-        public BufferSegmentEnumerator(ReadOnlySequence<byte> sequence)
-        {
-            enumerator = sequence.GetEnumerator();
-        }
-        
-        public ReadOnlyMemory<byte> Current => enumerator.Current;
-        
-        public bool MoveNext() => enumerator.MoveNext();
-    }
-
-    internal unsafe struct EpsilonBuffer
-    {
-        //private fixed byte buffer[16];
-
-        //public Span<byte> Span => new Span<byte>(buffer);
     }
 }

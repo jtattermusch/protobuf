@@ -84,6 +84,19 @@ namespace Google.Protobuf.Benchmarks
         }
 
         [Benchmark]
+        public ulong Parse_ConvertByteArrayToSpan()
+        {
+            ulong sum = 0;
+            int bufferPos = 0;
+            for (int i = 0; i < IterationCount; i++)
+            {
+                bufferPos = ParsingPrimitives.ParseRawVarint64_ConvertByteArrayToSpan(bufferPos, manyPrimitiveFieldsByteArray, out ulong result);
+                sum += result;
+            }
+            return sum;
+        }
+
+        [Benchmark]
         public ulong ParseFromMemory()
         {
             Memory<byte> memory = new Memory<byte>(manyPrimitiveFieldsByteArray);

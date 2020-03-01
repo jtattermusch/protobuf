@@ -44,19 +44,14 @@ using Google.Protobuf.Collections;
 namespace Google.Protobuf
 {
     /// <summary>
-    /// Fast parsing primitives
+    /// Fast parsing primitives. All methods assume that there's enough data left in the buffer so the reading of the next primitive
+    /// value can be peformed without further checks.
     /// </summary>
-    public static class ParsingPrimitivesActual
+    internal static class ParsingPrimitivesFastpath
     {
-        // all methods assume that there is at least 10 bytes of lookahead in the context
-        // (in which are are not going to hit the end of span that represents the current buffer)
-        // that means we don't have to check for end of the span while parsing
-
-        public static ulong ParseRawVarint64(ref ParseContext context)
+        public static ulong ParseRawVarint64(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {
-            var current = context.buffer;
-
-            ulong result = current[context.bufferPos++];
+            ulong result = buffer[state.bufferPos++];
             if (result < 128)
             {
                 return result;
@@ -65,7 +60,7 @@ namespace Google.Protobuf
             int shift = 7;
             do
             {
-                byte b = current[context.bufferPos++];
+                byte b = buffer[state.bufferPos++];
                 result |= (ulong)(b & 0x7F) << shift;
                 if (b < 0x80)
                 {
@@ -78,47 +73,44 @@ namespace Google.Protobuf
             throw InvalidProtocolBufferException.MalformedVarint();
         }
 
-        public static uint ParseRawVarint32(ref ParseContext context)
+        public static uint ParseRawVarint32(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {
-            var current = context.buffer;
-
-            int tmp = current[context.bufferPos++];
+            int tmp = buffer[state.bufferPos++];
             if (tmp < 128)
             {
                 return (uint)tmp;
             }
             int result = tmp & 0x7f;
-            if ((tmp = current[context.bufferPos++]) < 128)
+            if ((tmp = buffer[state.bufferPos++]) < 128)
             {
                 result |= tmp << 7;
             }
             else
             {
                 result |= (tmp & 0x7f) << 7;
-                if ((tmp = current[context.bufferPos++]) < 128)
+                if ((tmp = buffer[state.bufferPos++]) < 128)
                 {
                     result |= tmp << 14;
                 }
                 else
                 {
                     result |= (tmp & 0x7f) << 14;
-                    if ((tmp = current[context.bufferPos++]) < 128)
+                    if ((tmp = buffer[state.bufferPos++]) < 128)
                     {
                         result |= tmp << 21;
                     }
                     else
                     {
                         result |= (tmp & 0x7f) << 21;
-                        result |= (tmp = current[context.bufferPos++]) << 28;
+                        result |= (tmp = buffer[state.bufferPos++]) << 28;
                         if (tmp >= 128)
                         {
                             // Discard upper 32 bits.
                             for (int i = 0; i < 5; i++)
                             {
-                                tmp = current[context.bufferPos++];
-                                if (tmp < 128)
+                                if (buffer[state.bufferPos++] < 128)
                                 {
-                                    return (uint)result;
+                                    return (uint) result;
                                 }
                             }
                             throw InvalidProtocolBufferException.MalformedVarint();
@@ -129,20 +121,46 @@ namespace Google.Protobuf
             return (uint)result;
         }
 
-        public static uint ParseRawLittleEndian32(ref ParseContext context)
+        public static uint ParseRawLittleEndian32(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {
-            const int length = 4;
-            context.bufferPos += length;
-            return BinaryPrimitives.ReadUInt32LittleEndian(context.buffer);
+            const int length = sizeof(uint);
+            uint result = BinaryPrimitives.ReadUInt32LittleEndian(buffer.Slice(state.bufferPos, length));
+            state.bufferPos += length;
+            return result;
         }
 
-        public static ulong ParseRawLittleEndian64(ref ParseContext context)
+        public static ulong ParseRawLittleEndian64(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {
-            const int length = 8;
-            context.bufferPos += length;
-            return BinaryPrimitives.ReadUInt64LittleEndian(context.buffer);
+            const int length = sizeof(ulong);
+            ulong result = BinaryPrimitives.ReadUInt64LittleEndian(buffer.Slice(state.bufferPos, length));
+            state.bufferPos += length;
+            return result;
         }
 
-        // TODO: reading float and double
+        public static double ParseDouble(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
+        {
+            return BitConverter.Int64BitsToDouble((long)ParseRawLittleEndian64(ref buffer, ref state));
+        }
+
+        public static unsafe float ParseFloat(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
+        {
+            const int length = sizeof(float);
+            float result;
+            if (BitConverter.IsLittleEndian)
+            {
+                // ReadUnaligned uses processor architecture for endianness.
+                result = Unsafe.ReadUnaligned<float>(ref MemoryMarshal.GetReference(buffer.Slice(state.bufferPos, length)));
+            }
+            else
+            {
+                byte* stackBuffer = stackalloc byte[length];
+                Span<byte> tempSpan = new Span<byte>(stackBuffer, length);
+                buffer.Slice(state.bufferPos, length).CopyTo(tempSpan);
+                tempSpan.Reverse();
+                result = Unsafe.ReadUnaligned<float>(ref MemoryMarshal.GetReference(tempSpan));
+            }
+            state.bufferPos += length;
+            return result;
+        }
     }
 }

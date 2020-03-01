@@ -79,6 +79,34 @@ namespace Google.Protobuf
             throw InvalidProtocolBufferException.MalformedVarint();
         }
 
+        public static int ParseRawVarint64_ConvertByteArrayToSpan(int bufferPos, byte[] byteArrayBuffer, out ulong result)
+        {
+            Span<byte> buffer = new Span<byte>(byteArrayBuffer);
+            // we assume there's enough data left in the buffer so that we don't have to check at all
+
+            // the first part of the method should be inlined, the rest should invoke another non-inlined method
+            result = buffer[bufferPos++];
+            if (result < 128)
+            {
+                return bufferPos;
+            }
+            result &= 0x7f;
+            int shift = 7;
+            do
+            {
+                byte b = buffer[bufferPos++];
+                result |= (ulong)(b & 0x7F) << shift;
+                if (b < 0x80)
+                {
+                    return bufferPos;
+                }
+                shift += 7;
+            }
+            while (shift < 64);
+
+            throw InvalidProtocolBufferException.MalformedVarint();
+        }
+
         public static int ParseRawVarint64_FromMemory(int bufferPos, ref Memory<byte> memory, out ulong result)
         {
             Span<byte> buffer = memory.Span;

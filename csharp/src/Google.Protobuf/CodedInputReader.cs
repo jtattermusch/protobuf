@@ -72,6 +72,8 @@ namespace Google.Protobuf
 
         private readonly int recursionLimit;
 
+        private ParseContext parseContext;
+
 
         /// <summary>
         /// Creates a new CodedInputReader reading data from the given <see cref="ReadOnlySequence{T}"/>.
@@ -90,6 +92,7 @@ namespace Google.Protobuf
             this.decoder = null;
             this.DiscardUnknownFields = false;
             this.ExtensionRegistry = null;
+            this.parseContext = default(ParseContext);
         }
 
         /// <summary>
