@@ -289,6 +289,197 @@ namespace Google.Protobuf
             }
             return Unsafe.ReadUnaligned<float>(ref MemoryMarshal.GetReference(tempSpan));
         }
+
+        // TODO: move to different helper class
+        public static byte[] ReadRawBytes(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state, int size)
+        {
+            if (size < 0)
+            {
+                throw InvalidProtocolBufferException.NegativeSize();
+            }
+
+            if (state.totalBytesRetired + state.bufferPos + size > state.currentLimit)
+            {
+                // Read to the end of the stream (up to the current limit) anyway.
+                SkipRawBytes(ref buffer, ref state, state.currentLimit - state.totalBytesRetired - state.bufferPos);
+                // Then fail.
+                throw InvalidProtocolBufferException.TruncatedMessage();
+            }
+
+            if (size <= state.bufferSize - state.bufferPos)
+            {
+                // We have all the bytes we need already.
+                byte[] bytes = new byte[size];
+                buffer.Slice(state.bufferPos, size).CopyTo(bytes);
+                state.bufferPos += size;
+                return bytes;
+            }
+            else //if (size < buffer.Length)
+            {
+                // TODO: fix security problem!!
+                // TODO: use this whenever there's known size of data and we check it's available
+                // TODO>>..........
+
+                // Reading more bytes than are in the buffer, but not an excessive number
+                // of bytes.  We can safely allocate the resulting array ahead of time.
+
+                // First copy what we have.
+                byte[] bytes = new byte[size];
+                var bytesSpan = new Span<byte>(bytes);
+                int pos = state.bufferSize - state.bufferPos;
+                buffer.Slice(state.bufferPos, pos).CopyTo(bytesSpan.Slice(0, pos));
+                state.bufferPos = state.bufferSize;
+
+                // We want to use RefillBuffer() and then copy from the buffer into our
+                // byte array rather than reading directly into our byte array because
+                // the input may be unbuffered.
+                state.refillBufferHelper.RefillBuffer(ref buffer, ref state, true);
+
+                while (size - pos > state.bufferSize)
+                {
+                    buffer.Slice(0, state.bufferSize)
+                        .CopyTo(bytesSpan.Slice(pos, state.bufferSize));
+                    pos += state.bufferSize;
+                    state.bufferPos = state.bufferSize;
+                    state.refillBufferHelper.RefillBuffer(ref buffer, ref state, true);
+                }
+
+                buffer.Slice(0, size - pos)
+                        .CopyTo(bytesSpan.Slice(pos, size - pos));
+                state.bufferPos = size - pos;
+
+                return bytes;
+            }
+            // else
+            // {
+            //     // The size is very large.  For security reasons, we can't allocate the
+            //     // entire byte array yet.  The size comes directly from the input, so a
+            //     // maliciously-crafted message could provide a bogus very large size in
+            //     // order to trick the app into allocating a lot of memory.  We avoid this
+            //     // by allocating and reading only a small chunk at a time, so that the
+            //     // malicious message must actually *be* extremely large to cause
+            //     // problems.  Meanwhile, we limit the allowed size of a message elsewhere.
+
+            //     // Remember the buffer markers since we'll have to copy the bytes out of
+            //     // it later.
+            //     int originalBufferPos = state.bufferPos;
+            //     int originalBufferSize = state.bufferSize;
+
+            //     // Mark the current buffer consumed.
+            //     state.totalBytesRetired += state.bufferSize;
+            //     state.bufferPos = 0;
+            //     state.bufferSize = 0;
+
+            //     // Read all the rest of the bytes we need.
+            //     int sizeLeft = size - (originalBufferSize - originalBufferPos);
+            //     List<byte[]> chunks = new List<byte[]>();
+
+            //     while (sizeLeft > 0)
+            //     {
+            //         byte[] chunk = new byte[Math.Min(sizeLeft, buffer.Length)];
+            //         int pos = 0;
+            //         while (pos < chunk.Length)
+            //         {
+            //             int n = (input == null) ? -1 : input.Read(chunk, pos, chunk.Length - pos);
+            //             if (n <= 0)
+            //             {
+            //                 throw InvalidProtocolBufferException.TruncatedMessage();
+            //             }
+            //             state.totalBytesRetired += n;
+            //             pos += n;
+            //         }
+            //         sizeLeft -= chunk.Length;
+            //         chunks.Add(chunk);
+            //     }
+
+            //     // OK, got everything.  Now concatenate it all into one buffer.
+            //     byte[] bytes = new byte[size];
+
+            //     // Start by copying the leftover bytes from this.buffer.
+            //     int newPos = originalBufferSize - originalBufferPos;
+            //     ByteArray.Copy(buffer, originalBufferPos, bytes, 0, newPos);
+
+            //     // And now all the chunks.
+            //     foreach (byte[] chunk in chunks)
+            //     {
+            //         Buffer.BlockCopy(chunk, 0, bytes, newPos, chunk.Length);
+            //         newPos += chunk.Length;
+            //     }
+
+            //     // Done.
+            //     return bytes;
+            // }
+        }
+
+        public static void SkipRawBytes(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state, int size)
+        {
+            if (size < 0)
+            {
+                throw InvalidProtocolBufferException.NegativeSize();
+            }
+
+            if (state.totalBytesRetired + state.bufferPos + size > state.currentLimit)
+            {
+                // Read to the end of the stream anyway.
+                SkipRawBytes(ref buffer, ref state, state.currentLimit - state.totalBytesRetired - state.bufferPos);
+                // Then fail.
+                throw InvalidProtocolBufferException.TruncatedMessage();
+            }
+
+            if (size <= state.bufferSize - state.bufferPos)
+            {
+                // We have all the bytes we need already.
+                state.bufferPos += size;
+            }
+            else
+            {
+                // TODO: do we need to support skipping in seekable Streams?
+
+                // Skipping more bytes than are in the buffer.  First skip what we have.
+                int pos = state.bufferSize - state.bufferPos;
+                state.bufferPos = state.bufferSize;
+
+                state.refillBufferHelper.RefillBuffer(ref buffer, ref state, true);
+
+                while (size - pos > state.bufferSize)
+                {
+                    pos += state.bufferSize;
+                    state.bufferPos = state.bufferSize;
+                    state.refillBufferHelper.RefillBuffer(ref buffer, ref state, true);
+                }
+
+                state.bufferPos = size - pos;
+            }
+        }
+
+        public static string ReadRawString(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state, int length)
+        {
+            // No need to read any data for an empty string.
+            if (length == 0)
+            {
+                return string.Empty;
+            }
+
+            if (length < 0)
+            {
+                throw InvalidProtocolBufferException.NegativeSize();
+            }
+
+            // TODO: support fast string parsing
+            // with GOOGLE_PROTOBUF_SUPPORT_FAST_STRING
+
+            //if (length <= state.bufferSize - state.bufferPos && length > 0)
+            // {
+            //     // Fast path:  We already have the bytes in a contiguous buffer, so
+            //     //   just copy directly from it.
+            //     String result = CodedOutputStream.Utf8Encoding.GetString(buffer, state.bufferPos, length);
+            //     state.bufferPos += length;
+            //     return result;
+            // }
+
+            // Slow path: Build a byte array first then copy it.
+            return CodedOutputStream.Utf8Encoding.GetString(ReadRawBytes(ref buffer, ref state, length), 0, length);
+        }
         
         private static byte ReadRawByte(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {

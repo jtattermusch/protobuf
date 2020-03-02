@@ -63,6 +63,7 @@ namespace Google.Protobuf
 
         public RefillBufferHelper(Stream inputStream, byte[] inputStreamBuffer)
         {
+            // TODO: if inputStream == null, store known totalLength, and special case refilling.
             refillBufferDelegate = RefillFromStream;
             totalLength = null;
             readOnlySequenceEnumerator = default;

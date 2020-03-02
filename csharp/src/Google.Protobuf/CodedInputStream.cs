@@ -562,21 +562,8 @@ namespace Google.Protobuf
         public string ReadString()
         {
             int length = ReadLength();
-            // No need to read any data for an empty string.
-            if (length == 0)
-            {
-                return "";
-            }
-            if (length <= state.bufferSize - state.bufferPos && length > 0)
-            {
-                // Fast path:  We already have the bytes in a contiguous buffer, so
-                //   just copy directly from it.
-                String result = CodedOutputStream.Utf8Encoding.GetString(buffer, state.bufferPos, length);
-                state.bufferPos += length;
-                return result;
-            }
-            // Slow path: Build a byte array first then copy it.
-            return CodedOutputStream.Utf8Encoding.GetString(ReadRawBytes(length), 0, length);
+            var span = new ReadOnlySpan<byte>(buffer);
+            return ParsingPrimitivesClassic.ReadRawString(ref span, ref state, length);
         }
 
         /// <summary>
@@ -1125,115 +1112,8 @@ namespace Google.Protobuf
         /// </exception>
         internal byte[] ReadRawBytes(int size)
         {
-            if (size < 0)
-            {
-                throw InvalidProtocolBufferException.NegativeSize();
-            }
-
-            if (state.totalBytesRetired + state.bufferPos + size > state.currentLimit)
-            {
-                // Read to the end of the stream (up to the current limit) anyway.
-                SkipRawBytes(state.currentLimit - state.totalBytesRetired - state.bufferPos);
-                // Then fail.
-                throw InvalidProtocolBufferException.TruncatedMessage();
-            }
-
-            if (size <= state.bufferSize - state.bufferPos)
-            {
-                // We have all the bytes we need already.
-                byte[] bytes = new byte[size];
-                ByteArray.Copy(buffer, state.bufferPos, bytes, 0, size);
-                state.bufferPos += size;
-                return bytes;
-            }
-            else if (size < buffer.Length)
-            {
-                // Reading more bytes than are in the buffer, but not an excessive number
-                // of bytes.  We can safely allocate the resulting array ahead of time.
-
-                // First copy what we have.
-                byte[] bytes = new byte[size];
-                int pos = state.bufferSize - state.bufferPos;
-                ByteArray.Copy(buffer, state.bufferPos, bytes, 0, pos);
-                state.bufferPos = state.bufferSize;
-
-                // We want to use RefillBuffer() and then copy from the buffer into our
-                // byte array rather than reading directly into our byte array because
-                // the input may be unbuffered.
-                RefillBuffer(true);
-
-                while (size - pos > state.bufferSize)
-                {
-                    Buffer.BlockCopy(buffer, 0, bytes, pos, state.bufferSize);
-                    pos += state.bufferSize;
-                    state.bufferPos = state.bufferSize;
-                    RefillBuffer(true);
-                }
-
-                ByteArray.Copy(buffer, 0, bytes, pos, size - pos);
-                state.bufferPos = size - pos;
-
-                return bytes;
-            }
-            else
-            {
-                // The size is very large.  For security reasons, we can't allocate the
-                // entire byte array yet.  The size comes directly from the input, so a
-                // maliciously-crafted message could provide a bogus very large size in
-                // order to trick the app into allocating a lot of memory.  We avoid this
-                // by allocating and reading only a small chunk at a time, so that the
-                // malicious message must actually *be* extremely large to cause
-                // problems.  Meanwhile, we limit the allowed size of a message elsewhere.
-
-                // Remember the buffer markers since we'll have to copy the bytes out of
-                // it later.
-                int originalBufferPos = state.bufferPos;
-                int originalBufferSize = state.bufferSize;
-
-                // Mark the current buffer consumed.
-                state.totalBytesRetired += state.bufferSize;
-                state.bufferPos = 0;
-                state.bufferSize = 0;
-
-                // Read all the rest of the bytes we need.
-                int sizeLeft = size - (originalBufferSize - originalBufferPos);
-                List<byte[]> chunks = new List<byte[]>();
-
-                while (sizeLeft > 0)
-                {
-                    byte[] chunk = new byte[Math.Min(sizeLeft, buffer.Length)];
-                    int pos = 0;
-                    while (pos < chunk.Length)
-                    {
-                        int n = (input == null) ? -1 : input.Read(chunk, pos, chunk.Length - pos);
-                        if (n <= 0)
-                        {
-                            throw InvalidProtocolBufferException.TruncatedMessage();
-                        }
-                        state.totalBytesRetired += n;
-                        pos += n;
-                    }
-                    sizeLeft -= chunk.Length;
-                    chunks.Add(chunk);
-                }
-
-                // OK, got everything.  Now concatenate it all into one buffer.
-                byte[] bytes = new byte[size];
-
-                // Start by copying the leftover bytes from this.buffer.
-                int newPos = originalBufferSize - originalBufferPos;
-                ByteArray.Copy(buffer, originalBufferPos, bytes, 0, newPos);
-
-                // And now all the chunks.
-                foreach (byte[] chunk in chunks)
-                {
-                    Buffer.BlockCopy(chunk, 0, bytes, newPos, chunk.Length);
-                    newPos += chunk.Length;
-                }
-
-                // Done.
-                return bytes;
-            }
+            var span = new ReadOnlySpan<byte>(buffer);
+            return ParsingPrimitivesClassic.ReadRawBytes(ref span, ref state, size);
         }
 
         /// <summary>
@@ -1243,77 +1123,38 @@ namespace Google.Protobuf
         /// or the current limit was reached</exception>
         private void SkipRawBytes(int size)
         {
-            if (size < 0)
-            {
-                throw InvalidProtocolBufferException.NegativeSize();
-            }
-
-            if (state.totalBytesRetired + state.bufferPos + size > state.currentLimit)
-            {
-                // Read to the end of the stream anyway.
-                SkipRawBytes(state.currentLimit - state.totalBytesRetired - state.bufferPos);
-                // Then fail.
-                throw InvalidProtocolBufferException.TruncatedMessage();
-            }
-
-            if (size <= state.bufferSize - state.bufferPos)
-            {
-                // We have all the bytes we need already.
-                state.bufferPos += size;
-            }
-            else
-            {
-                // Skipping more bytes than are in the buffer.  First skip what we have.
-                int pos = state.bufferSize - state.bufferPos;
-
-                // ROK 5/7/2013 Issue #54: should retire all bytes in buffer (bufferSize)
-                // totalBytesRetired += pos;
-                state.totalBytesRetired += state.bufferSize;
-                
-                state.bufferPos = 0;
-                state.bufferSize = 0;
-
-                // Then skip directly from the InputStream for the rest.
-                if (pos < size)
-                {
-                    if (input == null)
-                    {
-                        throw InvalidProtocolBufferException.TruncatedMessage();
-                    }
-                    SkipImpl(size - pos);
-                    state.totalBytesRetired += size - pos;
-                }
-            }
+            var span = new ReadOnlySpan<byte>(buffer);
+            ParsingPrimitivesClassic.SkipRawBytes(ref span, ref state, size);
         }
 
-        /// <summary>
-        /// Abstraction of skipping to cope with streams which can't really skip.
-        /// </summary>
-        private void SkipImpl(int amountToSkip)
-        {
-            if (input.CanSeek)
-            {
-                long previousPosition = input.Position;
-                input.Position += amountToSkip;
-                if (input.Position != previousPosition + amountToSkip)
-                {
-                    throw InvalidProtocolBufferException.TruncatedMessage();
-                }
-            }
-            else
-            {
-                byte[] skipBuffer = new byte[Math.Min(1024, amountToSkip)];
-                while (amountToSkip > 0)
-                {
-                    int bytesRead = input.Read(skipBuffer, 0, Math.Min(skipBuffer.Length, amountToSkip));
-                    if (bytesRead <= 0)
-                    {
-                        throw InvalidProtocolBufferException.TruncatedMessage();
-                    }
-                    amountToSkip -= bytesRead;
-                }
-            }
-        }
+        // /// <summary>
+        // /// Abstraction of skipping to cope with streams which can't really skip.
+        // /// </summary>
+        // private void SkipImpl(int amountToSkip)
+        // {
+        //     if (input.CanSeek)
+        //     {
+        //         long previousPosition = input.Position;
+        //         input.Position += amountToSkip;
+        //         if (input.Position != previousPosition + amountToSkip)
+        //         {
+        //             throw InvalidProtocolBufferException.TruncatedMessage();
+        //         }
+        //     }
+        //     else
+        //     {
+        //         byte[] skipBuffer = new byte[Math.Min(1024, amountToSkip)];
+        //         while (amountToSkip > 0)
+        //         {
+        //             int bytesRead = input.Read(skipBuffer, 0, Math.Min(skipBuffer.Length, amountToSkip));
+        //             if (bytesRead <= 0)
+        //             {
+        //                 throw InvalidProtocolBufferException.TruncatedMessage();
+        //             }
+        //             amountToSkip -= bytesRead;
+        //         }
+        //     }
+        // }
 #endregion
     }
 }
