@@ -176,8 +176,7 @@ namespace Google.Protobuf
             this.state.bufferSize = bufferSize;
             this.state.sizeLimit = DefaultSizeLimit;
             this.state.recursionLimit = DefaultRecursionLimit;
-            // TODO: get rid of the delegate allocation..
-            this.state.refillBufferDelegate = new ParserInternalState.RefillBufferDelegate(RefillBufferHandler);
+            this.state.refillBufferHelper = new RefillBufferHelper(input, buffer);
             this.leaveOpen = leaveOpen;
 
             this.state.currentLimit = int.MaxValue;
@@ -1145,54 +1144,8 @@ namespace Google.Protobuf
         /// <returns></returns>
         private bool RefillBuffer(bool mustSucceed)
         {
-            if (state.bufferPos < state.bufferSize)
-            {
-                throw new InvalidOperationException("RefillBuffer() called when buffer wasn't empty.");
-            }
-
-            if (state.totalBytesRetired + state.bufferSize == state.currentLimit)
-            {
-                // Oops, we hit a limit.
-                if (mustSucceed)
-                {
-                    throw InvalidProtocolBufferException.TruncatedMessage();
-                }
-                else
-                {
-                    return false;
-                }
-            }
-
-            state.totalBytesRetired += state.bufferSize;
-
-            state.bufferPos = 0;
-            state.bufferSize = (input == null) ? 0 : input.Read(buffer, 0, buffer.Length);
-            if (state.bufferSize < 0)
-            {
-                throw new InvalidOperationException("Stream.Read returned a negative count");
-            }
-            if (state.bufferSize == 0)
-            {
-                if (mustSucceed)
-                {
-                    throw InvalidProtocolBufferException.TruncatedMessage();
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                RecomputeBufferSizeAfterLimit();
-                int totalBytesRead =
-                    state.totalBytesRetired + state.bufferSize + state.bufferSizeAfterLimit;
-                if (totalBytesRead < 0 || totalBytesRead > state.sizeLimit)
-                {
-                    throw InvalidProtocolBufferException.SizeLimitExceeded();
-                }
-                return true;
-            }
+            var span = new ReadOnlySpan<byte>(buffer);
+            return state.refillBufferHelper.RefillBuffer(ref span, ref state, mustSucceed);
         }
 
         // /// <summary>
@@ -1407,12 +1360,6 @@ namespace Google.Protobuf
                     amountToSkip -= bytesRead;
                 }
             }
-        }
-
-        private void RefillBufferHandler(ref ReadOnlySpan<byte> spanBuffer, ref ParserInternalState state)
-        {
-            RefillBuffer(true);
-            spanBuffer = new ReadOnlySpan<byte>(this.buffer);
         }
 #endregion
     }

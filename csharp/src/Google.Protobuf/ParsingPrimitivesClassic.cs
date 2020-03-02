@@ -294,7 +294,7 @@ namespace Google.Protobuf
         {
             if (state.bufferPos == state.bufferSize)
             {
-                state.refillBufferDelegate(ref buffer, ref state);
+                state.refillBufferHelper.RefillBuffer(ref buffer, ref state, true);
             }
             return buffer[state.bufferPos++];
         }
@@ -332,79 +332,6 @@ namespace Google.Protobuf
             throw InvalidProtocolBufferException.MalformedVarint();
         } 
 
-        // private static bool RefillBuffer(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state, bool mustSucceed)
-        // {
-        //     if (state.bufferPos < state.bufferSize)
-        //     {
-        //         throw new InvalidOperationException("RefillBuffer() called when buffer wasn't empty.");
-        //     }
-
-        //     if (state.totalBytesRetired + state.bufferSize == state.currentLimit)
-        //     {
-        //         // Oops, we hit a limit.
-        //         if (mustSucceed)
-        //         {
-        //             throw InvalidProtocolBufferException.TruncatedMessage();
-        //         }
-        //         else
-        //         {
-        //             return false;
-        //         }
-        //     }
-
-        //     state.totalBytesRetired += state.bufferSize;
-
-        //     state.bufferPos = 0;
-            
-        //     if (state.segmentEnumerator.MoveNext())
-        //     {
-        //         buffer = state.segmentEnumerator.Current.Span;
-        //         state.bufferSize = buffer.Length;
-        //     }
-        //     else
-        //     {
-        //         buffer = default(Span<byte>);
-        //         state.bufferSize = 0;
-        //     }
-
-        //     if (state.bufferSize == 0)
-        //     {
-        //         if (mustSucceed)
-        //         {
-        //             throw InvalidProtocolBufferException.TruncatedMessage();
-        //         }
-        //         else
-        //         {
-        //             return false;
-        //         }
-        //     }
-        //     else
-        //     {
-        //         RecomputeBufferSizeAfterLimit(ref state);
-        //         int totalBytesRead =
-        //             state.totalBytesRetired + state.bufferSize + state.bufferSizeAfterLimit;
-        //         if (totalBytesRead < 0 || totalBytesRead > state.sizeLimit)
-        //         {
-        //             throw InvalidProtocolBufferException.SizeLimitExceeded();
-        //         }
-        //         return true;
-        //     }
-        // }
-
-        // private static void RecomputeBufferSizeAfterLimit(ref ParserInternalState state)
-        // {
-        //     state.bufferSize += state.bufferSizeAfterLimit;
-        //     int bufferEnd = state.totalBytesRetired + state.bufferSize;
-        //     if (bufferEnd > state.currentLimit)
-        //     {
-        //         // Limit is in current buffer.
-        //         state.bufferSizeAfterLimit = bufferEnd - state.currentLimit;
-        //         state.bufferSize -= state.bufferSizeAfterLimit;
-        //     }
-        //     else
-        //     {
-        //         state.bufferSizeAfterLimit = 0;
-        //     }
-        // }
+        
     }
 }

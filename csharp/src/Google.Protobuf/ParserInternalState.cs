@@ -50,8 +50,6 @@ namespace Google.Protobuf
         // the Span representing the current buffer is kept separate so that this doesn't have to be a ref struct and so it can live
         // be included in CodedInputStream's internal state
 
-        public delegate void RefillBufferDelegate(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state);
-
         internal int bufferPos;  // position within the buffer
         internal int bufferSize;   // size of the current buffer (equals buffer.Length, but is here for similarity with CodedInputStream)
         internal int bufferSizeAfterLimit;  // 
@@ -60,9 +58,7 @@ namespace Google.Protobuf
         internal int totalBytesRetired;   // bytes consumed before start of current buffer.
         internal int recursionDepth;  // current recursion depth
         
-        // reads extra byte, possibly beyond the end of the current buffer (with performance penalty)
-        internal RefillBufferDelegate refillBufferDelegate;
-        internal BufferSegmentEnumerator segmentEnumerator;
+        internal RefillBufferHelper refillBufferHelper;
         
         /// <summary>
         /// The last tag we read. 0 indicates we've read to the end of the stream

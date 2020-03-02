@@ -43,51 +43,23 @@ using Google.Protobuf.Collections;
 
 namespace Google.Protobuf
 {
-    // a general enumerator of buffer segments
-    // for now it can enumerate a ReadOnlySequence's segments only, but it can
-    // be extended to read from e.g. plain old Stream etc.
-    internal struct BufferSegmentEnumerator
+    /// <summary>
+    /// Fast parsing primitives
+    /// </summary>
+    internal static class ParsingBufferHelpers
     {
-        private ReadOnlySequence<byte>.Enumerator enumerator;
-        private Stream inputStream;
-        private byte[] inputStreamBuffer;
-        private ReadOnlyMemory<byte> current;
+        // pushLimit
+        // popLimit
 
-        // TODO: add enumerator that can be filled from CodedInputStream
-        public BufferSegmentEnumerator(ReadOnlySequence<byte> sequence)
-        {
-            enumerator = sequence.GetEnumerator();
-            inputStream = null;
-            inputStreamBuffer = null;
-            current = default(Memory<byte>);
-        }
+        // refillBuffer (mustSuccess true/false)  + skippingFunctionality
+        // readRawBytes / skipRawBytes support
+        // reachedLimit etc...
+        // IsAtEnd ...
 
-        public BufferSegmentEnumerator(Stream inputStream, byte[] inputStreamBuffer)
-        {
-            enumerator = default(ReadOnlySequence<byte>.Enumerator);
-            this.inputStream = inputStream;
-            this.inputStreamBuffer = inputStreamBuffer;
-            current = default(Memory<byte>);
-        }
-        
-        public ReadOnlyMemory<byte> Current => current;
-        
-        public bool MoveNext()
-        {
-            if (inputStream == null)
-            {
-                var result = enumerator.MoveNext();
-                current = enumerator.Current;
-                return result;
-            }
+        // TODO: checkRequestedDataAvailable.... (needed for DOS safety of ReadString, ReadBytes)   "int? TotalInputSize"?
 
-            int bytesRead = inputStream.Read(inputStreamBuffer, 0, inputStreamBuffer.Length);
-            if (bytesRead < 0)
-            {
-                throw new InvalidOperationException("Stream.Read returned a negative count");
-            }
-            current = new Memory<byte>(inputStreamBuffer, 0, bytesRead);
-            return true;
-        }
+        // TODO: skip bytes, must be at the end of the buffer current buffer... (same as RefillBuffer())
+
+        // TODO: support both ReadOnlySequence and input buffer + Stream....
     }
 }
