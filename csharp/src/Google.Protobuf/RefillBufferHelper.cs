@@ -75,6 +75,40 @@ namespace Google.Protobuf
             return refillBufferDelegate(ref this, ref buffer, ref state, mustSucceed);
         }
 
+        /// <summary>
+        /// Sets currentLimit to (current position) + byteLimit. This is called
+        /// when descending into a length-delimited embedded message. The previous
+        /// limit is returned.
+        /// </summary>
+        /// <returns>The old limit.</returns>
+        public static int PushLimit(ref ParserInternalState state, int byteLimit)
+        {
+            if (byteLimit < 0)
+            {
+                throw InvalidProtocolBufferException.NegativeSize();
+            }
+            byteLimit += state.totalBytesRetired + state.bufferPos;
+            int oldLimit = state.currentLimit;
+            if (byteLimit > oldLimit)
+            {
+                throw InvalidProtocolBufferException.TruncatedMessage();
+            }
+            state.currentLimit = byteLimit;
+
+            RecomputeBufferSizeAfterLimit(ref state);
+
+            return oldLimit;
+        }
+
+        /// <summary>
+        /// Discards the current limit, returning the previous limit.
+        /// </summary>
+        public static void PopLimit(ref ParserInternalState state, int oldLimit)
+        {
+            state.currentLimit = oldLimit;
+            RecomputeBufferSizeAfterLimit(ref state);
+        }
+
         private static bool RefillFromReadOnlySequenceImpl(ref RefillBufferHelper helper, ref ReadOnlySpan<byte> buffer, ref ParserInternalState state, bool mustSucceed)
         {
             // TODO: remove duplication between FromReadOnlySequence and FromStream

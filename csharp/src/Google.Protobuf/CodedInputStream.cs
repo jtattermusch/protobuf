@@ -1064,37 +1064,7 @@ namespace Google.Protobuf
         /// <returns>The old limit.</returns>
         internal int PushLimit(int byteLimit)
         {
-            if (byteLimit < 0)
-            {
-                throw InvalidProtocolBufferException.NegativeSize();
-            }
-            byteLimit += state.totalBytesRetired + state.bufferPos;
-            int oldLimit = state.currentLimit;
-            if (byteLimit > oldLimit)
-            {
-                throw InvalidProtocolBufferException.TruncatedMessage();
-            }
-            state.currentLimit = byteLimit;
-
-            RecomputeBufferSizeAfterLimit();
-
-            return oldLimit;
-        }
-
-        private void RecomputeBufferSizeAfterLimit()
-        {
-            state.bufferSize += state.bufferSizeAfterLimit;
-            int bufferEnd = state.totalBytesRetired + state.bufferSize;
-            if (bufferEnd > state.currentLimit)
-            {
-                // Limit is in current buffer.
-                state.bufferSizeAfterLimit = bufferEnd - state.currentLimit;
-                state.bufferSize -= state.bufferSizeAfterLimit;
-            }
-            else
-            {
-                state.bufferSizeAfterLimit = 0;
-            }
+            return RefillBufferHelper.PushLimit(ref state, byteLimit);
         }
 
         /// <summary>
@@ -1102,8 +1072,7 @@ namespace Google.Protobuf
         /// </summary>
         internal void PopLimit(int oldLimit)
         {
-            state.currentLimit = oldLimit;
-            RecomputeBufferSizeAfterLimit();
+            RefillBufferHelper.PopLimit(ref state, oldLimit);
         }
 
         /// <summary>
@@ -1147,22 +1116,6 @@ namespace Google.Protobuf
             var span = new ReadOnlySpan<byte>(buffer);
             return state.refillBufferHelper.RefillBuffer(ref span, ref state, mustSucceed);
         }
-
-        // /// <summary>
-        // /// Read one byte from the input.
-        // /// </summary>
-        // /// <exception cref="InvalidProtocolBufferException">
-        // /// the end of the stream or the current limit was reached
-        // /// </exception>
-        // internal byte ReadRawByte()
-        // {
-        //     // TODO: we don't need this method anymore?
-        //     if (state.bufferPos == state.bufferSize)
-        //     {
-        //         RefillBuffer(true);
-        //     }
-        //     return buffer[state.bufferPos++];
-        // }
 
         /// <summary>
         /// Reads a fixed size of bytes from the input.
