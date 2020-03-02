@@ -177,6 +177,7 @@ namespace Google.Protobuf
             this.state.sizeLimit = DefaultSizeLimit;
             this.state.recursionLimit = DefaultRecursionLimit;
             this.state.refillBufferHelper = new RefillBufferHelper(input, buffer);
+            this.state.skipLastFieldAction = () => { SkipLastField(); };
             this.leaveOpen = leaveOpen;
 
             this.state.currentLimit = int.MaxValue;
@@ -354,59 +355,8 @@ namespace Google.Protobuf
         /// <returns>The next field tag, or 0 for end of stream. (0 is never a valid tag.)</returns>
         public uint ReadTag()
         {
-            // TODO: move the parsing logic elsewhere
-            if (state.hasNextTag)
-            {
-                state.lastTag = state.nextTag;
-                state.hasNextTag = false;
-                return state.lastTag;
-            }
-
-            // Optimize for the incredibly common case of having at least two bytes left in the buffer,
-            // and those two bytes being enough to get the tag. This will be true for fields up to 4095.
-            if (state.bufferPos + 2 <= state.bufferSize)
-            {
-                int tmp = buffer[state.bufferPos++];
-                if (tmp < 128)
-                {
-                    state.lastTag = (uint)tmp;
-                }
-                else
-                {
-                    int result = tmp & 0x7f;
-                    if ((tmp = buffer[state.bufferPos++]) < 128)
-                    {
-                        result |= tmp << 7;
-                        state.lastTag = (uint) result;
-                    }
-                    else
-                    {
-                        // Nope, rewind and go the potentially slow route.
-                        state.bufferPos -= 2;
-                        state.lastTag = ReadRawVarint32();
-                    }
-                }
-            }
-            else
-            {
-                if (IsAtEnd)
-                {
-                    state.lastTag = 0;
-                    return 0;
-                }
-
-                state.lastTag = ReadRawVarint32();
-            }
-            if (WireFormat.GetTagFieldNumber(state.lastTag) == 0)
-            {
-                // If we actually read a tag with a field of 0, that's not a valid tag.
-                throw InvalidProtocolBufferException.InvalidTag();
-            }
-            if (ReachedLimit)
-            {
-                return 0;
-            }
-            return state.lastTag;
+            var span = new ReadOnlySpan<byte>(buffer);
+            return RefillBufferHelper.ParseTag(ref span, ref state);
         }
 
         /// <summary>
@@ -702,255 +652,68 @@ namespace Google.Protobuf
 
         internal static float? ReadFloatWrapperLittleEndian(CodedInputStream input)
         {
-            // length:1 + tag:1 + value:4 = 6 bytes
-            if (input.state.bufferPos + 6 <= input.state.bufferSize)
-            {
-                // The entire wrapper message is already contained in `buffer`.
-                int length = input.buffer[input.state.bufferPos];
-                if (length == 0)
-                {
-                    input.state.bufferPos++;
-                    return 0F;
-                }
-                // tag:1 + value:4 = length of 5 bytes
-                // field=1, type=32-bit = tag of 13
-                if (length != 5 || input.buffer[input.state.bufferPos + 1] != 13)
-                {
-                    return ReadFloatWrapperSlow(input);
-                }
-                var result = BitConverter.ToSingle(input.buffer, input.state.bufferPos + 2);
-                input.state.bufferPos += 6;
-                return result;
-            }
-            else
-            {
-                return ReadFloatWrapperSlow(input);
-            }
+            var span = new ReadOnlySpan<byte>(input.buffer);
+            return ParsingPrimitivesWrappers.ReadFloatWrapperLittleEndian(ref span, ref input.state);
         }
 
         internal static float? ReadFloatWrapperSlow(CodedInputStream input)
         {
-            int length = input.ReadLength();
-            if (length == 0)
-            {
-                return 0F;
-            }
-            int finalBufferPos = input.state.totalBytesRetired + input.state.bufferPos + length;
-            float result = 0F;
-            do
-            {
-                // field=1, type=32-bit = tag of 13
-                if (input.ReadTag() == 13)
-                {
-                    result = input.ReadFloat();
-                }
-                else
-                {
-                    input.SkipLastField();
-                }
-            }
-            while (input.state.totalBytesRetired + input.state.bufferPos < finalBufferPos);
-            return result;
+            var span = new ReadOnlySpan<byte>(input.buffer);
+            return ParsingPrimitivesWrappers.ReadFloatWrapperSlow(ref span, ref input.state);
         }
 
         internal static double? ReadDoubleWrapperLittleEndian(CodedInputStream input)
         {
-            // length:1 + tag:1 + value:8 = 10 bytes
-            if (input.state.bufferPos + 10 <= input.state.bufferSize)
-            {
-                // The entire wrapper message is already contained in `buffer`.
-                int length = input.buffer[input.state.bufferPos];
-                if (length == 0)
-                {
-                    input.state.bufferPos++;
-                    return 0D;
-                }
-                // tag:1 + value:8 = length of 9 bytes
-                // field=1, type=64-bit = tag of 9
-                if (length != 9 || input.buffer[input.state.bufferPos + 1] != 9)
-                {
-                    return ReadDoubleWrapperSlow(input);
-                }
-                var result = BitConverter.ToDouble(input.buffer, input.state.bufferPos + 2);
-                input.state.bufferPos += 10;
-                return result;
-            }
-            else
-            {
-                return ReadDoubleWrapperSlow(input);
-            }
+            var span = new ReadOnlySpan<byte>(input.buffer);
+            return ParsingPrimitivesWrappers.ReadDoubleWrapperLittleEndian(ref span, ref input.state);
         }
 
         internal static double? ReadDoubleWrapperSlow(CodedInputStream input)
         {
-            int length = input.ReadLength();
-            if (length == 0)
-            {
-                return 0D;
-            }
-            int finalBufferPos = input.state.totalBytesRetired + input.state.bufferPos + length;
-            double result = 0D;
-            do
-            {
-                // field=1, type=64-bit = tag of 9
-                if (input.ReadTag() == 9)
-                {
-                    result = input.ReadDouble();
-                }
-                else
-                {
-                    input.SkipLastField();
-                }
-            }
-            while (input.state.totalBytesRetired + input.state.bufferPos < finalBufferPos);
-            return result;
+            var span = new ReadOnlySpan<byte>(input.buffer);
+            return ParsingPrimitivesWrappers.ReadDoubleWrapperSlow(ref span, ref input.state);
         }
 
         internal static bool? ReadBoolWrapper(CodedInputStream input)
         {
-            return ReadUInt64Wrapper(input) != 0;
+            var span = new ReadOnlySpan<byte>(input.buffer);
+            return ParsingPrimitivesWrappers.ReadBoolWrapper(ref span, ref input.state);
         }
 
         internal static uint? ReadUInt32Wrapper(CodedInputStream input)
         {
-            // length:1 + tag:1 + value:5(varint32-max) = 7 bytes
-            if (input.state.bufferPos + 7 <= input.state.bufferSize)
-            {
-                // The entire wrapper message is already contained in `buffer`.
-                int pos0 = input.state.bufferPos;
-                int length = input.buffer[input.state.bufferPos++];
-                if (length == 0)
-                {
-                    return 0;
-                }
-                // Length will always fit in a single byte.
-                if (length >= 128)
-                {
-                    input.state.bufferPos = pos0;
-                    return ReadUInt32WrapperSlow(input);
-                }
-                int finalBufferPos = input.state.bufferPos + length;
-                // field=1, type=varint = tag of 8
-                if (input.buffer[input.state.bufferPos++] != 8)
-                {
-                    input.state.bufferPos = pos0;
-                    return ReadUInt32WrapperSlow(input);
-                }
-                var result = input.ReadUInt32();
-                // Verify this message only contained a single field.
-                if (input.state.bufferPos != finalBufferPos)
-                {
-                    input.state.bufferPos = pos0;
-                    return ReadUInt32WrapperSlow(input);
-                }
-                return result;
-            }
-            else
-            {
-                return ReadUInt32WrapperSlow(input);
-            }
+            var span = new ReadOnlySpan<byte>(input.buffer);
+            return ParsingPrimitivesWrappers.ReadUInt32Wrapper(ref span, ref input.state);
         }
 
         private static uint? ReadUInt32WrapperSlow(CodedInputStream input)
         {
-            int length = input.ReadLength();
-            if (length == 0)
-            {
-                return 0;
-            }
-            int finalBufferPos = input.state.totalBytesRetired + input.state.bufferPos + length;
-            uint result = 0;
-            do
-            {
-                // field=1, type=varint = tag of 8
-                if (input.ReadTag() == 8)
-                {
-                    result = input.ReadUInt32();
-                }
-                else
-                {
-                    input.SkipLastField();
-                }
-            }
-            while (input.state.totalBytesRetired + input.state.bufferPos < finalBufferPos);
-            return result;
+            var span = new ReadOnlySpan<byte>(input.buffer);
+            return ParsingPrimitivesWrappers.ReadUInt32WrapperSlow(ref span, ref input.state);
         }
 
         internal static int? ReadInt32Wrapper(CodedInputStream input)
         {
-            return (int?)ReadUInt32Wrapper(input);
+            var span = new ReadOnlySpan<byte>(input.buffer);
+            return ParsingPrimitivesWrappers.ReadInt32Wrapper(ref span, ref input.state);
         }
 
         internal static ulong? ReadUInt64Wrapper(CodedInputStream input)
         {
-            // field=1, type=varint = tag of 8
-            const int expectedTag = 8;
-            // length:1 + tag:1 + value:10(varint64-max) = 12 bytes
-            if (input.state.bufferPos + 12 <= input.state.bufferSize)
-            {
-                // The entire wrapper message is already contained in `buffer`.
-                int pos0 = input.state.bufferPos;
-                int length = input.buffer[input.state.bufferPos++];
-                if (length == 0)
-                {
-                    return 0L;
-                }
-                // Length will always fit in a single byte.
-                if (length >= 128)
-                {
-                    input.state.bufferPos = pos0;
-                    return ReadUInt64WrapperSlow(input);
-                }
-                int finalBufferPos = input.state.bufferPos + length;
-                if (input.buffer[input.state.bufferPos++] != expectedTag)
-                {
-                    input.state.bufferPos = pos0;
-                    return ReadUInt64WrapperSlow(input);
-                }
-                var result = input.ReadUInt64();
-                // Verify this message only contained a single field.
-                if (input.state.bufferPos != finalBufferPos)
-                {
-                    input.state.bufferPos = pos0;
-                    return ReadUInt64WrapperSlow(input);
-                }
-                return result;
-            }
-            else
-            {
-                return ReadUInt64WrapperSlow(input);
-            }
+            var span = new ReadOnlySpan<byte>(input.buffer);
+            return ParsingPrimitivesWrappers.ReadUInt64Wrapper(ref span, ref input.state);
         }
 
         internal static ulong? ReadUInt64WrapperSlow(CodedInputStream input)
         {
-            // field=1, type=varint = tag of 8
-            const int expectedTag = 8;
-            int length = input.ReadLength();
-            if (length == 0)
-            {
-                return 0L;
-            }
-            int finalBufferPos = input.state.totalBytesRetired + input.state.bufferPos + length;
-            ulong result = 0L;
-            do
-            {
-                if (input.ReadTag() == expectedTag)
-                {
-                    result = input.ReadUInt64();
-                }
-                else
-                {
-                    input.SkipLastField();
-                }
-            }
-            while (input.state.totalBytesRetired + input.state.bufferPos < finalBufferPos);
-            return result;
+            var span = new ReadOnlySpan<byte>(input.buffer);
+            return ParsingPrimitivesWrappers.ReadUInt64WrapperSlow(ref span, ref input.state);
         }
 
         internal static long? ReadInt64Wrapper(CodedInputStream input)
         {
-            return (long?)ReadUInt64Wrapper(input);
+            var span = new ReadOnlySpan<byte>(input.buffer);
+            return ParsingPrimitivesWrappers.ReadInt64Wrapper(ref span, ref input.state);
         }
 
 #endregion
@@ -1070,12 +833,7 @@ namespace Google.Protobuf
         {
             get
             {
-                if (state.currentLimit == int.MaxValue)
-                {
-                    return false;
-                }
-                int currentAbsolutePosition = state.totalBytesRetired + state.bufferPos;
-                return currentAbsolutePosition >= state.currentLimit;
+                return RefillBufferHelper.IsReachedLimit(ref state);
             }
         }
 
@@ -1086,7 +844,11 @@ namespace Google.Protobuf
         /// </summary>
         public bool IsAtEnd
         {
-            get { return state.bufferPos == state.bufferSize && !RefillBuffer(false); }
+            get
+            {
+                var span = new ReadOnlySpan<byte>(buffer);
+                return RefillBufferHelper.IsAtEnd(ref span, ref state);
+            }
         }
 
         /// <summary>

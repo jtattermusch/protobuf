@@ -48,11 +48,15 @@ namespace Google.Protobuf
     /// </summary>
     internal static class ParsingPrimitivesClassic
     {
-        // TODO: readTag
-
-        // TODO: readLength
 
         // TODO: read basic types
+
+        // TODO: move zigzag decode methods
+
+        public static int ParseLength(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
+        {
+            return (int)ParseRawVarint32(ref buffer, ref state);
+        }
 
         public static ulong ParseRawVarint64(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {
@@ -272,7 +276,7 @@ namespace Google.Protobuf
             return result;  
         }
 
-        public static unsafe float ParseFloatSlow(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
+        private static unsafe float ParseFloatSlow(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {
             const int length = sizeof(float);
             byte* stackBuffer = stackalloc byte[length];

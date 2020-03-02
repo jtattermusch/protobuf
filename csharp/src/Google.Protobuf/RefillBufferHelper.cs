@@ -110,6 +110,88 @@ namespace Google.Protobuf
             RecomputeBufferSizeAfterLimit(ref state);
         }
 
+        // TODO: this method doesn't quite belong here and it's not very hermetic
+        public static uint ParseTag(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
+        {
+            // TODO: move the parsing logic elsewhere
+            if (state.hasNextTag)
+            {
+                state.lastTag = state.nextTag;
+                state.hasNextTag = false;
+                return state.lastTag;
+            }
+
+            // Optimize for the incredibly common case of having at least two bytes left in the buffer,
+            // and those two bytes being enough to get the tag. This will be true for fields up to 4095.
+            if (state.bufferPos + 2 <= state.bufferSize)
+            {
+                int tmp = buffer[state.bufferPos++];
+                if (tmp < 128)
+                {
+                    state.lastTag = (uint)tmp;
+                }
+                else
+                {
+                    int result = tmp & 0x7f;
+                    if ((tmp = buffer[state.bufferPos++]) < 128)
+                    {
+                        result |= tmp << 7;
+                        state.lastTag = (uint) result;
+                    }
+                    else
+                    {
+                        // Nope, rewind and go the potentially slow route.
+                        state.bufferPos -= 2;
+                        state.lastTag = ParsingPrimitivesClassic.ParseRawVarint32(ref buffer, ref state);
+                    }
+                }
+            }
+            else
+            {
+                if (IsAtEnd(ref buffer, ref state))
+                {
+                    state.lastTag = 0;
+                    return 0;
+                }
+
+                state.lastTag = ParsingPrimitivesClassic.ParseRawVarint32(ref buffer, ref state);
+            }
+            if (WireFormat.GetTagFieldNumber(state.lastTag) == 0)
+            {
+                // If we actually read a tag with a field of 0, that's not a valid tag.
+                throw InvalidProtocolBufferException.InvalidTag();
+            }
+            if (IsReachedLimit(ref state))
+            {
+                return 0;
+            }
+            return state.lastTag;
+        }
+
+        /// <summary>
+        /// Returns whether or not all the data before the limit has been read.
+        /// </summary>
+        /// <returns></returns>
+        public static bool IsReachedLimit(ref ParserInternalState state)
+        {
+            if (state.currentLimit == int.MaxValue)
+            {
+                return false;
+            }
+            int currentAbsolutePosition = state.totalBytesRetired + state.bufferPos;
+            return currentAbsolutePosition >= state.currentLimit;
+        }
+
+        /// <summary>
+        /// Returns true if the stream has reached the end of the input. This is the
+        /// case if either the end of the underlying input source has been reached or
+        /// the stream has reached a limit created using PushLimit.
+        /// </summary>
+        public static bool IsAtEnd(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
+        {
+            return state.bufferPos == state.bufferSize && !state.refillBufferHelper.RefillBuffer(ref buffer, ref state, false);
+        }
+
         private static bool RefillFromReadOnlySequenceImpl(ref RefillBufferHelper helper, ref ReadOnlySpan<byte> buffer, ref ParserInternalState state, bool mustSucceed)
         {
             // TODO: remove duplication between FromReadOnlySequence and FromStream
