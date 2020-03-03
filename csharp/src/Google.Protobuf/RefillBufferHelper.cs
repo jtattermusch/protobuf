@@ -171,6 +171,75 @@ namespace Google.Protobuf
             return state.lastTag;
         }
 
+        // TODO: move to a better place
+        public static void SkipLastField(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
+        {
+            if (state.lastTag == 0)
+            {
+                throw new InvalidOperationException("SkipLastField cannot be called at the end of a stream");
+            }
+            switch (WireFormat.GetTagWireType(state.lastTag))
+            {
+                case WireFormat.WireType.StartGroup:
+                    SkipGroup(ref buffer, ref state, state.lastTag);
+                    break;
+                case WireFormat.WireType.EndGroup:
+                    throw new InvalidProtocolBufferException(
+                        "SkipLastField called on an end-group tag, indicating that the corresponding start-group was missing");
+                case WireFormat.WireType.Fixed32:
+                    ParsingPrimitivesClassic.ParseRawLittleEndian32(ref buffer, ref state);
+                    break;
+                case WireFormat.WireType.Fixed64:
+                    ParsingPrimitivesClassic.ParseRawLittleEndian64(ref buffer, ref state);
+                    break;
+                case WireFormat.WireType.LengthDelimited:
+                    var length = ParsingPrimitivesClassic.ParseLength(ref buffer, ref state);
+                    ParsingPrimitivesClassic.SkipRawBytes(ref buffer, ref state, length);
+                    break;
+                case WireFormat.WireType.Varint:
+                    ParsingPrimitivesClassic.ParseRawVarint32(ref buffer, ref state);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Skip a group.
+        /// </summary>
+        public static void SkipGroup(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state, uint startGroupTag)
+        {
+            // Note: Currently we expect this to be the way that groups are read. We could put the recursion
+            // depth changes into the ReadTag method instead, potentially...
+            state.recursionDepth++;
+            if (state.recursionDepth >= state.recursionLimit)
+            {
+                throw InvalidProtocolBufferException.RecursionLimitExceeded();
+            }
+            uint tag;
+            while (true)
+            {
+                tag = ParseTag(ref buffer, ref state);
+                if (tag == 0)
+                {
+                    throw InvalidProtocolBufferException.TruncatedMessage();
+                }
+                // Can't call SkipLastField for this case- that would throw.
+                if (WireFormat.GetTagWireType(tag) == WireFormat.WireType.EndGroup)
+                {
+                    break;
+                }
+                // This recursion will allow us to handle nested groups.
+                SkipLastField(ref buffer, ref state);
+            }
+            int startField = WireFormat.GetTagFieldNumber(startGroupTag);
+            int endField = WireFormat.GetTagFieldNumber(tag);
+            if (startField != endField)
+            {
+                throw new InvalidProtocolBufferException(
+                    $"Mismatched end-group tag. Started with field {startField}; ended with field {endField}");
+            }
+            state.recursionDepth--;
+        }
+
         /// <summary>
         /// Returns whether or not all the data before the limit has been read.
         /// </summary>

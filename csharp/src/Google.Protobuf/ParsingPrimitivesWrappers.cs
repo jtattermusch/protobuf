@@ -95,7 +95,7 @@ namespace Google.Protobuf
                 }
                 else
                 {
-                    state.skipLastFieldAction();
+                    RefillBufferHelper.SkipLastField(ref buffer, ref state);
                 }
             }
             while (state.totalBytesRetired + state.bufferPos < finalBufferPos);
@@ -147,7 +147,7 @@ namespace Google.Protobuf
                 }
                 else
                 {
-                    state.skipLastFieldAction();
+                    RefillBufferHelper.SkipLastField(ref buffer, ref state);
                 }
             }
             while (state.totalBytesRetired + state.bufferPos < finalBufferPos);
@@ -217,7 +217,7 @@ namespace Google.Protobuf
                 }
                 else
                 {
-                    state.skipLastFieldAction();
+                    RefillBufferHelper.SkipLastField(ref buffer, ref state);
                 }
             }
             while (state.totalBytesRetired + state.bufferPos < finalBufferPos);
@@ -289,7 +289,7 @@ namespace Google.Protobuf
                 }
                 else
                 {
-                    state.skipLastFieldAction();
+                    RefillBufferHelper.SkipLastField(ref buffer, ref state);
                 }
             }
             while (state.totalBytesRetired + state.bufferPos < finalBufferPos);

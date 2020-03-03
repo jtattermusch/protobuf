@@ -177,7 +177,6 @@ namespace Google.Protobuf
             this.state.sizeLimit = DefaultSizeLimit;
             this.state.recursionLimit = DefaultRecursionLimit;
             this.state.refillBufferHelper = new RefillBufferHelper(input, buffer);
-            this.state.skipLastFieldAction = () => { SkipLastField(); };
             this.leaveOpen = leaveOpen;
 
             this.state.currentLimit = int.MaxValue;
@@ -374,32 +373,8 @@ namespace Google.Protobuf
         /// <exception cref="InvalidOperationException">The last read operation read to the end of the logical stream</exception>
         public void SkipLastField()
         {
-            if (state.lastTag == 0)
-            {
-                throw new InvalidOperationException("SkipLastField cannot be called at the end of a stream");
-            }
-            switch (WireFormat.GetTagWireType(state.lastTag))
-            {
-                case WireFormat.WireType.StartGroup:
-                    SkipGroup(state.lastTag);
-                    break;
-                case WireFormat.WireType.EndGroup:
-                    throw new InvalidProtocolBufferException(
-                        "SkipLastField called on an end-group tag, indicating that the corresponding start-group was missing");
-                case WireFormat.WireType.Fixed32:
-                    ReadFixed32();
-                    break;
-                case WireFormat.WireType.Fixed64:
-                    ReadFixed64();
-                    break;
-                case WireFormat.WireType.LengthDelimited:
-                    var length = ReadLength();
-                    SkipRawBytes(length);
-                    break;
-                case WireFormat.WireType.Varint:
-                    ReadRawVarint32();
-                    break;
-            }
+            var span = new ReadOnlySpan<byte>(buffer);
+            RefillBufferHelper.SkipLastField(ref span, ref state);
         }
 
         /// <summary>
@@ -407,37 +382,8 @@ namespace Google.Protobuf
         /// </summary>
         internal void SkipGroup(uint startGroupTag)
         {
-            // Note: Currently we expect this to be the way that groups are read. We could put the recursion
-            // depth changes into the ReadTag method instead, potentially...
-            state.recursionDepth++;
-            if (state.recursionDepth >= state.recursionLimit)
-            {
-                throw InvalidProtocolBufferException.RecursionLimitExceeded();
-            }
-            uint tag;
-            while (true)
-            {
-                tag = ReadTag();
-                if (tag == 0)
-                {
-                    throw InvalidProtocolBufferException.TruncatedMessage();
-                }
-                // Can't call SkipLastField for this case- that would throw.
-                if (WireFormat.GetTagWireType(tag) == WireFormat.WireType.EndGroup)
-                {
-                    break;
-                }
-                // This recursion will allow us to handle nested groups.
-                SkipLastField();
-            }
-            int startField = WireFormat.GetTagFieldNumber(startGroupTag);
-            int endField = WireFormat.GetTagFieldNumber(tag);
-            if (startField != endField)
-            {
-                throw new InvalidProtocolBufferException(
-                    $"Mismatched end-group tag. Started with field {startField}; ended with field {endField}");
-            }
-            state.recursionDepth--;
+            var span = new ReadOnlySpan<byte>(buffer);
+            RefillBufferHelper.SkipGroup(ref span, ref state, startGroupTag);
         }
 
         /// <summary>

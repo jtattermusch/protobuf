@@ -59,8 +59,6 @@ namespace Google.Protobuf
         internal int recursionDepth;  // current recursion depth
         
         internal RefillBufferHelper refillBufferHelper;
-
-        internal Action skipLastFieldAction;   // TODO: dirty, get rid of it
         
         /// <summary>
         /// The last tag we read. 0 indicates we've read to the end of the stream
