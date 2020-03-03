@@ -216,6 +216,7 @@ namespace Google.Protobuf
             state.totalBytesRetired += state.bufferSize;
 
             state.bufferPos = 0;
+            state.bufferSize = 0;
             while (helper.readOnlySequenceEnumerator.MoveNext())
             {
                 
