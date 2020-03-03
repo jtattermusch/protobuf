@@ -95,7 +95,7 @@ namespace Google.Protobuf
             this.state.recursionDepth = 0;
             this.state.sizeLimit = DefaultSizeLimit;
             this.state.recursionLimit = recursionLimit;
-            this.state.currentLimit = (int)input.Length;
+            this.state.currentLimit = int.MaxValue;
             this.state.refillBufferHelper = new RefillBufferHelper(input);
 
             //this.decoder = null;
