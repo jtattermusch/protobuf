@@ -219,6 +219,8 @@ namespace Google.Protobuf
         /// <returns>The next field tag, or 0 for end of input. (0 is never a valid tag.)</returns>
         public uint ReadTag()
         {
+            // TODO: looks like we need a different variant of ParseTag here???
+
             return RefillBufferHelper.ParseTag(ref buffer, ref state);
             // if (ReachedLimit)
             // {
