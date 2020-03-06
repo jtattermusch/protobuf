@@ -242,6 +242,67 @@ namespace Google.Protobuf
             state.recursionDepth--;
         }
 
+        public static void ReadMessage(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state, IMessage message)
+        {
+            int length = ParsingPrimitivesClassic.ParseLength(ref buffer, ref state);
+            if (state.recursionDepth >= state.recursionLimit)
+            {
+                throw InvalidProtocolBufferException.RecursionLimitExceeded();
+            }
+            int oldLimit = PushLimit(ref state, length);
+            ++state.recursionDepth;
+
+            // TODO: choose method to invoke based on message type...
+            //if (message is IBufferMessage)
+            //{
+            //    // TODO: call internal parse...
+            //}
+            //else
+            {
+                if (state.codedInputStream == null)
+                {
+                    // TODO: improve the msg
+                    throw new InvalidProtocolBufferException("Cannot parse message with current parse context. Do you need to regenerate the code?");
+                }
+                message.MergeFrom(state.codedInputStream);
+            }
+
+            CheckReadEndOfStreamTag(ref state);
+            // Check that we've read exactly as much data as expected.
+            if (!IsReachedLimit(ref state))
+            {
+                throw InvalidProtocolBufferException.TruncatedMessage();
+            }
+            --state.recursionDepth;
+            PopLimit(ref state, oldLimit);
+        }
+
+        public static void ReadGroup(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state, IMessage message)
+        {
+            if (state.recursionDepth >= state.recursionLimit)
+            {
+                throw InvalidProtocolBufferException.RecursionLimitExceeded();
+            }
+            ++state.recursionDepth;
+            
+            // TODO: choose method to invoke based on message type...
+            //if (message is IBufferMessage)
+            //{
+            //    // TODO: call internal parse...
+            //}
+            //else
+            {
+                if (state.codedInputStream == null)
+                {
+                    // TODO: improve the msg
+                    throw new InvalidProtocolBufferException("Cannot parse message with current parse context. Do you need to regenerate the code?");
+                }
+                message.MergeFrom(state.codedInputStream);
+            }
+
+            --state.recursionDepth;
+        }
+
         /// <summary>
         /// Returns whether or not all the data before the limit has been read.
         /// </summary>
@@ -264,6 +325,20 @@ namespace Google.Protobuf
         public static bool IsAtEnd(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {
             return state.bufferPos == state.bufferSize && !state.refillBufferHelper.RefillBuffer(ref buffer, ref state, false);
+        }
+
+        /// <summary>
+        /// Verifies that the last call to ReadTag() returned tag 0 - in other words,
+        /// we've reached the end of the stream when we expected to.
+        /// </summary>
+        /// <exception cref="InvalidProtocolBufferException">The 
+        /// tag read was not the one specified</exception>
+        public static void CheckReadEndOfStreamTag(ref ParserInternalState state)
+        {
+            if (state.lastTag != 0)
+            {
+                throw InvalidProtocolBufferException.MoreDataAvailable();
+            }
         }
 
         private static bool RefillFromReadOnlySequenceImpl(ref RefillBufferHelper helper, ref ReadOnlySpan<byte> buffer, ref ParserInternalState state, bool mustSucceed)
@@ -398,6 +473,6 @@ namespace Google.Protobuf
             {
                 state.bufferSizeAfterLimit = 0;
             }
-        }
+        }        
     }
 }
