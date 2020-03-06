@@ -132,6 +132,7 @@ namespace Google.Protobuf
         /// </summary>
         public bool IsAtEnd
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get {  return RefillBufferHelper.IsAtEnd(ref buffer, ref state); }
         }
 
@@ -225,6 +226,8 @@ namespace Google.Protobuf
         /// for an embedded message, for example.
         /// </remarks>
         /// <returns>The next field tag, or 0 for end of input. (0 is never a valid tag.)</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+
         public uint ReadTag()
         {
             // TODO: looks like we need a different variant of ParseTag here???
@@ -317,6 +320,7 @@ namespace Google.Protobuf
         /// <summary>
         /// Skip a group.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void SkipGroup(uint startGroupTag)
         {
             RefillBufferHelper.SkipGroup(ref buffer, ref state, startGroupTag);
@@ -325,6 +329,7 @@ namespace Google.Protobuf
         /// <summary>
         /// Reads a double field from the input.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double ReadDouble()
         {
             return ParsingPrimitivesClassic.ParseDouble(ref buffer, ref state);
@@ -333,6 +338,7 @@ namespace Google.Protobuf
         /// <summary>
         /// Reads a float field from the input.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float ReadFloat()
         {
             return ParsingPrimitivesClassic.ParseFloat(ref buffer, ref state);
@@ -341,6 +347,7 @@ namespace Google.Protobuf
         /// <summary>
         /// Reads a uint64 field from the input.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ulong ReadUInt64()
         {
             return ParsingPrimitivesClassic.ParseRawVarint64(ref buffer, ref state);
@@ -349,6 +356,7 @@ namespace Google.Protobuf
         /// <summary>
         /// Reads an int64 field from the input.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long ReadInt64()
         {
             return (long)ParsingPrimitivesClassic.ParseRawVarint64(ref buffer, ref state);
@@ -357,6 +365,7 @@ namespace Google.Protobuf
         /// <summary>
         /// Reads an int32 field from the input.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadInt32()
         {
             return (int)ParsingPrimitivesClassic.ParseRawVarint32(ref buffer, ref state);
@@ -365,6 +374,7 @@ namespace Google.Protobuf
         /// <summary>
         /// Reads a fixed64 field from the input.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ulong ReadFixed64()
         {
             return ParsingPrimitivesClassic.ParseRawLittleEndian64(ref buffer, ref state);
@@ -373,6 +383,7 @@ namespace Google.Protobuf
         /// <summary>
         /// Reads a fixed32 field from the input.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint ReadFixed32()
         {
             return ParsingPrimitivesClassic.ParseRawLittleEndian32(ref buffer, ref state);
@@ -381,6 +392,7 @@ namespace Google.Protobuf
         /// <summary>
         /// Reads a bool field from the input.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ReadBool()
         {
             return ParsingPrimitivesClassic.ParseRawVarint64(ref buffer, ref state) != 0;
@@ -389,6 +401,7 @@ namespace Google.Protobuf
         /// <summary>
         /// Reads a string field from the input.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public string ReadString()
         {
             int length = ReadLength();
@@ -482,7 +495,8 @@ namespace Google.Protobuf
 
         /// <summary>
         /// Reads an embedded message field value from the input.
-        /// </summary>   
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ReadMessage(IMessage message)
         {
             // TODO: add a fallback if IMessage does not implement IBufferMessage 
@@ -510,6 +524,7 @@ namespace Google.Protobuf
         /// <summary>
         /// Reads an embedded group field from the input.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ReadGroup(IMessage message)
         {
             RefillBufferHelper.ReadGroup(ref this, message);
@@ -525,7 +540,8 @@ namespace Google.Protobuf
 
         /// <summary>
         /// Reads a bytes field value from the input.
-        /// </summary>   
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ByteString ReadBytes()
         {
             int length = ReadLength();
@@ -556,7 +572,8 @@ namespace Google.Protobuf
 
         /// <summary>
         /// Reads a uint32 field value from the input.
-        /// </summary>   
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint ReadUInt32()
         {
             return ParsingPrimitivesClassic.ParseRawVarint32(ref buffer, ref state);
@@ -564,7 +581,8 @@ namespace Google.Protobuf
 
         /// <summary>
         /// Reads an enum field value from the input.
-        /// </summary>   
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadEnum()
         {
             // Currently just a pass-through, but it's nice to separate it logically from WriteInt32.
@@ -573,7 +591,8 @@ namespace Google.Protobuf
 
         /// <summary>
         /// Reads an sfixed32 field value from the input.
-        /// </summary>   
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadSFixed32()
         {
             return (int)ParsingPrimitivesClassic.ParseRawLittleEndian32(ref buffer, ref state);
@@ -581,7 +600,8 @@ namespace Google.Protobuf
 
         /// <summary>
         /// Reads an sfixed64 field value from the input.
-        /// </summary>   
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long ReadSFixed64()
         {
             return (long)ParsingPrimitivesClassic.ParseRawLittleEndian64(ref buffer, ref state);
@@ -589,7 +609,8 @@ namespace Google.Protobuf
 
         /// <summary>
         /// Reads an sint32 field value from the input.
-        /// </summary>   
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadSInt32()
         {
             return CodedInputStream.DecodeZigZag32(ParsingPrimitivesClassic.ParseRawVarint32(ref buffer, ref state));
@@ -597,7 +618,8 @@ namespace Google.Protobuf
 
         /// <summary>
         /// Reads an sint64 field value from the input.
-        /// </summary>   
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long ReadSInt64()
         {
             return CodedInputStream.DecodeZigZag64(ParsingPrimitivesClassic.ParseRawVarint64(ref buffer, ref state));
@@ -610,6 +632,7 @@ namespace Google.Protobuf
         /// This is internally just reading a varint, but this method exists
         /// to make the calling code clearer.
         /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadLength()
         {
             return (int)ParsingPrimitivesClassic.ParseRawVarint32(ref buffer, ref state);
@@ -780,6 +803,7 @@ namespace Google.Protobuf
         // /// That means we can check the size just once, then just read directly from the buffer
         // /// without constant rechecking of the buffer length.
         // /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal uint ReadRawVarint32()
         {
             return ParsingPrimitivesClassic.ParseRawVarint32(ref buffer, ref state);
@@ -870,6 +894,7 @@ namespace Google.Protobuf
         // /// <summary>
         // /// Reads a raw varint from the input.
         // /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal ulong ReadRawVarint64()
         {
             return ParsingPrimitivesClassic.ParseRawVarint64(ref buffer, ref state);
@@ -909,6 +934,7 @@ namespace Google.Protobuf
         // /// <summary>
         // /// Reads a 32-bit little-endian integer from the input.
         // /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal uint ReadRawLittleEndian32()
         {
             return ParsingPrimitivesClassic.ParseRawLittleEndian32(ref buffer, ref state);
@@ -945,6 +971,7 @@ namespace Google.Protobuf
         // /// <summary>
         // /// Reads a 64-bit little-endian integer from the input.
         // /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal unsafe ulong ReadRawLittleEndian64()
         {
             return ParsingPrimitivesClassic.ParseRawLittleEndian64(ref buffer, ref state);
@@ -985,6 +1012,7 @@ namespace Google.Protobuf
         /// limit is returned.
         /// </summary>
         /// <returns>The old limit.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal int PushLimit(int byteLimit)
         {
             return RefillBufferHelper.PushLimit(ref state, byteLimit);
@@ -993,6 +1021,7 @@ namespace Google.Protobuf
         /// <summary>
         /// Discards the current limit, returning the previous limit.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void PopLimit(int oldLimit)
         {
             RefillBufferHelper.PopLimit(ref state, oldLimit);
