@@ -65,8 +65,9 @@ namespace Google.Protobuf
         internal const int DefaultRecursionLimit = 100;
         internal const int DefaultSizeLimit = Int32.MaxValue;
 
-        private ReadOnlySpan<byte> buffer;
-        private ParserInternalState state;
+        // TODO: make the fields private
+        internal ReadOnlySpan<byte> buffer;
+        internal  ParserInternalState state;
         
         //private SequenceReader<byte> reader;
         //private uint lastTag;
@@ -97,6 +98,7 @@ namespace Google.Protobuf
             this.state.recursionLimit = recursionLimit;
             this.state.currentLimit = int.MaxValue;
             this.state.refillBufferHelper = new RefillBufferHelper(input);
+            this.state.codedInputStream = null;
 
             //this.decoder = null;
             this.state.DiscardUnknownFields = false;
@@ -104,6 +106,12 @@ namespace Google.Protobuf
 
             // TODO: reading wrappers won't work without this.
             //this.state.skipLastFieldAction = () => { SkipLastField(); };
+        }
+
+        internal CodedInputReader(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
+        {
+            this.buffer = buffer;
+            this.state = state;
         }
 
         /// <summary>
@@ -475,38 +483,44 @@ namespace Google.Protobuf
         /// <summary>
         /// Reads an embedded message field value from the input.
         /// </summary>   
-        public void ReadMessage(IBufferMessage builder)
+        public void ReadMessage(IMessage message)
         {
-            int length = ReadLength();
-            if (state.recursionDepth >= state.recursionLimit)
-            {
-                throw InvalidProtocolBufferException.RecursionLimitExceeded();
-            }
-            int oldLimit = PushLimit(length);
-            ++state.recursionDepth;
-            builder.MergeFrom(ref this);
-            CheckReadEndOfInputTag();
-            // Check that we've read exactly as much data as expected.
-            if (!ReachedLimit)
-            {
-                throw InvalidProtocolBufferException.TruncatedMessage();
-            }
-            --state.recursionDepth;
-            PopLimit(oldLimit);
+            // TODO: add a fallback if IMessage does not implement IBufferMessage 
+            RefillBufferHelper.ReadMessage(ref this, message);
+
+
+            // int length = ReadLength();
+            // if (state.recursionDepth >= state.recursionLimit)
+            // {
+            //     throw InvalidProtocolBufferException.RecursionLimitExceeded();
+            // }
+            // int oldLimit = PushLimit(length);
+            // ++state.recursionDepth;
+            // builder.MergeFrom(ref this);
+            // CheckReadEndOfInputTag();
+            // // Check that we've read exactly as much data as expected.
+            // if (!ReachedLimit)
+            // {
+            //     throw InvalidProtocolBufferException.TruncatedMessage();
+            // }
+            // --state.recursionDepth;
+            // PopLimit(oldLimit);
         }
 
         /// <summary>
         /// Reads an embedded group field from the input.
         /// </summary>
-        public void ReadGroup(IBufferMessage builder)
+        public void ReadGroup(IMessage message)
         {
-            if (state.recursionDepth >= state.recursionLimit)
-            {
-                throw InvalidProtocolBufferException.RecursionLimitExceeded();
-            }
-            ++state.recursionDepth;
-            builder.MergeFrom(ref this);
-            --state.recursionDepth;
+            RefillBufferHelper.ReadGroup(ref this, message);
+
+            // if (state.recursionDepth >= state.recursionLimit)
+            // {
+            //     throw InvalidProtocolBufferException.RecursionLimitExceeded();
+            // }
+            // ++state.recursionDepth;
+            // builder.MergeFrom(ref this);
+            // --state.recursionDepth;
         }
 
         /// <summary>
