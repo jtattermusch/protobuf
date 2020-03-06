@@ -45,7 +45,7 @@ namespace Google.Protobuf
 {
     
     // warning: this is a mutable struct, so it needs to be only passed as a ref!
-    internal struct ParserInternalState
+    public struct ParserInternalState
     {
         // the Span representing the current buffer is kept separate so that this doesn't have to be a ref struct and so it can live
         // be included in CodedInputStream's internal state
@@ -58,7 +58,12 @@ namespace Google.Protobuf
         internal int totalBytesRetired;   // bytes consumed before start of current buffer.
         internal int recursionDepth;  // current recursion depth
         
-        internal RefillBufferHelper refillBufferHelper;
+        internal RefillBufferHelper refillBufferHelper;   // TODO: this is too big
+
+        // TODO: remember if this context is supposed to call MergeFrom(CodedInputStream cis) or MergeFrom(ref ParseContext ....) for submessages.
+        // if non-null, the top level parse method was started with given cis as an argument
+        internal CodedInputStream codedInputStream;
+        
         
         /// <summary>
         /// The last tag we read. 0 indicates we've read to the end of the stream
