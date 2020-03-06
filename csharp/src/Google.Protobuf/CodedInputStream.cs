@@ -34,6 +34,9 @@ using Google.Protobuf.Collections;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Security;
 
 namespace Google.Protobuf
 {
@@ -177,6 +180,7 @@ namespace Google.Protobuf
             this.state.sizeLimit = DefaultSizeLimit;
             this.state.recursionLimit = DefaultRecursionLimit;
             this.state.refillBufferHelper = new RefillBufferHelper(input, buffer);
+            this.state.codedInputStream = this;
             this.leaveOpen = leaveOpen;
 
             this.state.currentLimit = int.MaxValue;
@@ -315,10 +319,7 @@ namespace Google.Protobuf
         /// tag read was not the one specified</exception>
         internal void CheckReadEndOfStreamTag()
         {
-            if (state.lastTag != 0)
-            {
-                throw InvalidProtocolBufferException.MoreDataAvailable();
-            }
+            RefillBufferHelper.CheckReadEndOfStreamTag(ref state);
         }
         #endregion
 
@@ -467,22 +468,8 @@ namespace Google.Protobuf
         /// </summary>
         public void ReadMessage(IMessage builder)
         {
-            int length = ReadLength();
-            if (state.recursionDepth >= state.recursionLimit)
-            {
-                throw InvalidProtocolBufferException.RecursionLimitExceeded();
-            }
-            int oldLimit = PushLimit(length);
-            ++state.recursionDepth;
-            builder.MergeFrom(this);
-            CheckReadEndOfStreamTag();
-            // Check that we've read exactly as much data as expected.
-            if (!ReachedLimit)
-            {
-                throw InvalidProtocolBufferException.TruncatedMessage();
-            }
-            --state.recursionDepth;
-            PopLimit(oldLimit);
+            var span = new ReadOnlySpan<byte>(buffer);
+            RefillBufferHelper.ReadMessage(ref span, ref state, builder);
         }
 
         /// <summary>
@@ -490,13 +477,8 @@ namespace Google.Protobuf
         /// </summary>
         public void ReadGroup(IMessage builder)
         {
-            if (state.recursionDepth >= state.recursionLimit)
-            {
-                throw InvalidProtocolBufferException.RecursionLimitExceeded();
-            }
-            ++state.recursionDepth;
-            builder.MergeFrom(this);
-            --state.recursionDepth;
+            var span = new ReadOnlySpan<byte>(buffer);
+            RefillBufferHelper.ReadGroup(ref span, ref state, builder);
         }
 
         /// <summary>
@@ -834,35 +816,6 @@ namespace Google.Protobuf
             var span = new ReadOnlySpan<byte>(buffer);
             ParsingPrimitivesClassic.SkipRawBytes(ref span, ref state, size);
         }
-
-        // /// <summary>
-        // /// Abstraction of skipping to cope with streams which can't really skip.
-        // /// </summary>
-        // private void SkipImpl(int amountToSkip)
-        // {
-        //     if (input.CanSeek)
-        //     {
-        //         long previousPosition = input.Position;
-        //         input.Position += amountToSkip;
-        //         if (input.Position != previousPosition + amountToSkip)
-        //         {
-        //             throw InvalidProtocolBufferException.TruncatedMessage();
-        //         }
-        //     }
-        //     else
-        //     {
-        //         byte[] skipBuffer = new byte[Math.Min(1024, amountToSkip)];
-        //         while (amountToSkip > 0)
-        //         {
-        //             int bytesRead = input.Read(skipBuffer, 0, Math.Min(skipBuffer.Length, amountToSkip));
-        //             if (bytesRead <= 0)
-        //             {
-        //                 throw InvalidProtocolBufferException.TruncatedMessage();
-        //             }
-        //             amountToSkip -= bytesRead;
-        //         }
-        //     }
-        // }
 #endregion
     }
 }
