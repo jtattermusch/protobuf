@@ -63,9 +63,9 @@ namespace Google.Protobuf
 
         public RefillBufferHelper(Stream inputStream, byte[] inputStreamBuffer)
         {
-            // TODO: if inputStream == null, store known totalLength, and special case refilling.
+            // TODO: if inputStream == null, use a different simplified approach for refilling.
             refillBufferDelegate = RefillFromStream;
-            totalLength = null;
+            totalLength = inputStream == null ? (int?)inputStreamBuffer.Length : null;
             readOnlySequenceEnumerator = default;
             this.inputStream = inputStream;
             this.inputStreamBuffer = inputStreamBuffer;
@@ -75,6 +75,8 @@ namespace Google.Protobuf
         {
             return refillBufferDelegate(ref this, ref buffer, ref state, mustSucceed);
         }
+
+        public int? TotalLength => totalLength;
 
         /// <summary>
         /// Sets currentLimit to (current position) + byteLimit. This is called

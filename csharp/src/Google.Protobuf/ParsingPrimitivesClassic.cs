@@ -46,7 +46,7 @@ namespace Google.Protobuf
     /// <summary>
     /// Fast parsing primitives
     /// </summary>
-    internal static class ParsingPrimitivesClassic
+    public static class ParsingPrimitivesClassic
     {
 
         // TODO: read basic types
@@ -233,7 +233,7 @@ namespace Google.Protobuf
 
         public static ulong ParseRawLittleEndian64(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {
-            const int length = 8;
+            const int length = sizeof(ulong);
             if (state.bufferPos + length > state.bufferSize)
             {
                 return ParseRawLittleEndian64SlowPath(ref buffer, ref state);
@@ -259,8 +259,16 @@ namespace Google.Protobuf
 
         public static double ParseDouble(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {
-            // TODO(jtattermusch): how fast is Int64BitsToDouble?
-            return BitConverter.Int64BitsToDouble((long)ParseRawLittleEndian64(ref buffer, ref state));
+            const int length = sizeof(double);
+            if (!BitConverter.IsLittleEndian || state.bufferPos + length > state.bufferSize)
+            {
+                // TODO(jtattermusch): how fast is Int64BitsToDouble?
+                BitConverter.Int64BitsToDouble((long)ParseRawLittleEndian64(ref buffer, ref state));
+            }
+            // ReadUnaligned uses processor architecture for endianness.
+            double result = Unsafe.ReadUnaligned<double>(ref MemoryMarshal.GetReference(buffer.Slice(state.bufferPos, length)));
+            state.bufferPos += length;
+            return result;
         }
 
         public static float ParseFloat(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
@@ -318,12 +326,8 @@ namespace Google.Protobuf
                 state.bufferPos += size;
                 return bytes;
             }
-            else //if (size < buffer.Length)
+            else if (size < buffer.Length || size < state.refillBufferHelper.TotalLength)
             {
-                // TODO: fix security problem!!
-                // TODO: use this whenever there's known size of data and we check it's available
-                // TODO>>..........
-
                 // Reading more bytes than are in the buffer, but not an excessive number
                 // of bytes.  We can safely allocate the resulting array ahead of time.
 
@@ -354,65 +358,50 @@ namespace Google.Protobuf
 
                 return bytes;
             }
-            // else
-            // {
-            //     // The size is very large.  For security reasons, we can't allocate the
-            //     // entire byte array yet.  The size comes directly from the input, so a
-            //     // maliciously-crafted message could provide a bogus very large size in
-            //     // order to trick the app into allocating a lot of memory.  We avoid this
-            //     // by allocating and reading only a small chunk at a time, so that the
-            //     // malicious message must actually *be* extremely large to cause
-            //     // problems.  Meanwhile, we limit the allowed size of a message elsewhere.
+            else
+            {
+                // The size is very large.  For security reasons, we can't allocate the
+                // entire byte array yet.  The size comes directly from the input, so a
+                // maliciously-crafted message could provide a bogus very large size in
+                // order to trick the app into allocating a lot of memory.  We avoid this
+                // by allocating and reading only a small chunk at a time, so that the
+                // malicious message must actually *be* extremely large to cause
+                // problems.  Meanwhile, we limit the allowed size of a message elsewhere.
 
-            //     // Remember the buffer markers since we'll have to copy the bytes out of
-            //     // it later.
-            //     int originalBufferPos = state.bufferPos;
-            //     int originalBufferSize = state.bufferSize;
+                List<byte[]> chunks = new List<byte[]>();
 
-            //     // Mark the current buffer consumed.
-            //     state.totalBytesRetired += state.bufferSize;
-            //     state.bufferPos = 0;
-            //     state.bufferSize = 0;
+                int pos = state.bufferSize - state.bufferPos;
+                byte[] firstChunk = new byte[pos];
+                buffer.Slice(state.bufferPos, pos).CopyTo(firstChunk);
+                chunks.Add(firstChunk);
+                state.bufferPos = state.bufferSize;
 
-            //     // Read all the rest of the bytes we need.
-            //     int sizeLeft = size - (originalBufferSize - originalBufferPos);
-            //     List<byte[]> chunks = new List<byte[]>();
+                // Read all the rest of the bytes we need.
+                int sizeLeft = size - pos;
+                while (sizeLeft > 0)
+                {
+                    state.refillBufferHelper.RefillBuffer(ref buffer, ref state, true);
+                    byte[] chunk = new byte[Math.Min(sizeLeft, state.bufferSize)];
 
-            //     while (sizeLeft > 0)
-            //     {
-            //         byte[] chunk = new byte[Math.Min(sizeLeft, buffer.Length)];
-            //         int pos = 0;
-            //         while (pos < chunk.Length)
-            //         {
-            //             int n = (input == null) ? -1 : input.Read(chunk, pos, chunk.Length - pos);
-            //             if (n <= 0)
-            //             {
-            //                 throw InvalidProtocolBufferException.TruncatedMessage();
-            //             }
-            //             state.totalBytesRetired += n;
-            //             pos += n;
-            //         }
-            //         sizeLeft -= chunk.Length;
-            //         chunks.Add(chunk);
-            //     }
+                    buffer.Slice(0, chunk.Length)
+                        .CopyTo(chunk);
+                    state.bufferPos += chunk.Length;
+                    sizeLeft -= chunk.Length;
+                    chunks.Add(chunk);
+                }
 
-            //     // OK, got everything.  Now concatenate it all into one buffer.
-            //     byte[] bytes = new byte[size];
+                // OK, got everything.  Now concatenate it all into one buffer.
+                byte[] bytes = new byte[size];          
+                int newPos = 0;
+                foreach (byte[] chunk in chunks)
+                {
+                    Buffer.BlockCopy(chunk, 0, bytes, newPos, chunk.Length);
+                    newPos += chunk.Length;
+                }
 
-            //     // Start by copying the leftover bytes from this.buffer.
-            //     int newPos = originalBufferSize - originalBufferPos;
-            //     ByteArray.Copy(buffer, originalBufferPos, bytes, 0, newPos);
-
-            //     // And now all the chunks.
-            //     foreach (byte[] chunk in chunks)
-            //     {
-            //         Buffer.BlockCopy(chunk, 0, bytes, newPos, chunk.Length);
-            //         newPos += chunk.Length;
-            //     }
-
-            //     // Done.
-            //     return bytes;
-            // }
+                // Done.
+                return bytes;
+            }
         }
 
         public static void SkipRawBytes(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state, int size)
