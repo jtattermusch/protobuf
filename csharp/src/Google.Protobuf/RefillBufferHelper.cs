@@ -252,20 +252,7 @@ namespace Google.Protobuf
             int oldLimit = PushLimit(ref state, length);
             ++state.recursionDepth;
 
-            // TODO: choose method to invoke based on message type...
-            //if (message is IBufferMessage)
-            //{
-            //    // TODO: call internal parse...
-            //}
-            //else
-            {
-                if (state.codedInputStream == null)
-                {
-                    // TODO: improve the msg
-                    throw new InvalidProtocolBufferException("Cannot parse message with current parse context. Do you need to regenerate the code?");
-                }
-                message.MergeFrom(state.codedInputStream);
-            }
+            ReadRawMessage(ref buffer, ref state, message);
 
             CheckReadEndOfStreamTag(ref state);
             // Check that we've read exactly as much data as expected.
@@ -285,6 +272,13 @@ namespace Google.Protobuf
             }
             ++state.recursionDepth;
             
+            ReadRawMessage(ref buffer, ref state, message);
+
+            --state.recursionDepth;
+        }
+
+        public static void ReadRawMessage(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state, IMessage message)
+        {
             // TODO: choose method to invoke based on message type...
             //if (message is IBufferMessage)
             //{
@@ -299,8 +293,6 @@ namespace Google.Protobuf
                 }
                 message.MergeFrom(state.codedInputStream);
             }
-
-            --state.recursionDepth;
         }
 
         /// <summary>

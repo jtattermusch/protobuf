@@ -816,6 +816,42 @@ namespace Google.Protobuf
             var span = new ReadOnlySpan<byte>(buffer);
             ParsingPrimitivesClassic.SkipRawBytes(ref span, ref state, size);
         }
+
+        // Invoked by MergeFrom(CodedInputStream cis)
+        public void ReadRawMessage(IMessage message)
+        {
+            var span = new ReadOnlySpan<byte>(buffer);
+            RefillBufferHelper.ReadRawMessage(ref span, ref state, message);
+        }
+
+        // /// <summary>
+        // /// Abstraction of skipping to cope with streams which can't really skip.
+        // /// </summary>
+        // private void SkipImpl(int amountToSkip)
+        // {
+        //     if (input.CanSeek)
+        //     {
+        //         long previousPosition = input.Position;
+        //         input.Position += amountToSkip;
+        //         if (input.Position != previousPosition + amountToSkip)
+        //         {
+        //             throw InvalidProtocolBufferException.TruncatedMessage();
+        //         }
+        //     }
+        //     else
+        //     {
+        //         byte[] skipBuffer = new byte[Math.Min(1024, amountToSkip)];
+        //         while (amountToSkip > 0)
+        //         {
+        //             int bytesRead = input.Read(skipBuffer, 0, Math.Min(skipBuffer.Length, amountToSkip));
+        //             if (bytesRead <= 0)
+        //             {
+        //                 throw InvalidProtocolBufferException.TruncatedMessage();
+        //             }
+        //             amountToSkip -= bytesRead;
+        //         }
+        //     }
+        // }
 #endregion
     }
 }
