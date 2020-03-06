@@ -314,6 +314,7 @@ namespace Google.Protobuf
         /// case if either the end of the underlying input source has been reached or
         /// the stream has reached a limit created using PushLimit.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsAtEnd(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {
             return state.bufferPos == state.bufferSize && !state.refillBufferHelper.RefillBuffer(ref buffer, ref state, false);

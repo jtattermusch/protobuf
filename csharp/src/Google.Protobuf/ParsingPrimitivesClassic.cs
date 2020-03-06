@@ -52,6 +52,7 @@ namespace Google.Protobuf
         // TODO: read basic types
 
         // TODO: move zigzag decode methods
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
 
         public static int ParseLength(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {
