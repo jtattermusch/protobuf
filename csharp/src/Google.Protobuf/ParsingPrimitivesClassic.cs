@@ -263,7 +263,7 @@ namespace Google.Protobuf
             if (!BitConverter.IsLittleEndian || state.bufferPos + length > state.bufferSize)
             {
                 // TODO(jtattermusch): how fast is Int64BitsToDouble?
-                BitConverter.Int64BitsToDouble((long)ParseRawLittleEndian64(ref buffer, ref state));
+                return BitConverter.Int64BitsToDouble((long)ParseRawLittleEndian64(ref buffer, ref state));
             }
             // ReadUnaligned uses processor architecture for endianness.
             double result = Unsafe.ReadUnaligned<double>(ref MemoryMarshal.GetReference(buffer.Slice(state.bufferPos, length)));
