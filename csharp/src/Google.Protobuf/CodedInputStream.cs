@@ -469,7 +469,16 @@ namespace Google.Protobuf
         public void ReadMessage(IMessage builder)
         {
             var span = new ReadOnlySpan<byte>(buffer);
-            RefillBufferHelper.ReadMessage(ref span, ref state, builder);
+            var ctx = new CodedInputReader(ref span, ref state);
+            try
+            {
+                RefillBufferHelper.ReadMessage(ref ctx, builder);
+            }
+            finally
+            {
+                // store the state
+                state = ctx.state;
+            }
         }
 
         /// <summary>
@@ -478,7 +487,16 @@ namespace Google.Protobuf
         public void ReadGroup(IMessage builder)
         {
             var span = new ReadOnlySpan<byte>(buffer);
-            RefillBufferHelper.ReadGroup(ref span, ref state, builder);
+            var ctx = new CodedInputReader(ref span, ref state);
+            try
+            {
+                RefillBufferHelper.ReadGroup(ref ctx, builder);
+            }
+            finally
+            {
+                // store the state
+                state = ctx.state;
+            }
         }
 
         /// <summary>
@@ -821,7 +839,16 @@ namespace Google.Protobuf
         public void ReadRawMessage(IMessage message)
         {
             var span = new ReadOnlySpan<byte>(buffer);
-            RefillBufferHelper.ReadRawMessage(ref span, ref state, message);
+            var ctx = new CodedInputReader(ref span, ref state);
+            try
+            {
+                RefillBufferHelper.ReadRawMessage(ref ctx, message);
+            }
+            finally
+            {
+                // store the state
+                state = ctx.state;
+            }
         }
 
         // /// <summary>

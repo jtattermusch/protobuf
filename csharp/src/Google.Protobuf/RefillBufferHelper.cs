@@ -242,56 +242,56 @@ namespace Google.Protobuf
             state.recursionDepth--;
         }
 
-        public static void ReadMessage(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state, IMessage message)
+        public static void ReadMessage(ref CodedInputReader ctx, IMessage message)
         {
-            int length = ParsingPrimitivesClassic.ParseLength(ref buffer, ref state);
-            if (state.recursionDepth >= state.recursionLimit)
+            int length = ParsingPrimitivesClassic.ParseLength(ref ctx.buffer, ref ctx.state);
+            if (ctx.state.recursionDepth >= ctx.state.recursionLimit)
             {
                 throw InvalidProtocolBufferException.RecursionLimitExceeded();
             }
-            int oldLimit = PushLimit(ref state, length);
-            ++state.recursionDepth;
+            int oldLimit = PushLimit(ref ctx.state, length);
+            ++ctx.state.recursionDepth;
 
-            ReadRawMessage(ref buffer, ref state, message);
+            ReadRawMessage(ref ctx, message);
 
-            CheckReadEndOfStreamTag(ref state);
+            CheckReadEndOfStreamTag(ref ctx.state);
             // Check that we've read exactly as much data as expected.
-            if (!IsReachedLimit(ref state))
+            if (!IsReachedLimit(ref ctx.state))
             {
                 throw InvalidProtocolBufferException.TruncatedMessage();
             }
-            --state.recursionDepth;
-            PopLimit(ref state, oldLimit);
+            --ctx.state.recursionDepth;
+            PopLimit(ref ctx.state, oldLimit);
         }
 
-        public static void ReadGroup(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state, IMessage message)
+        public static void ReadGroup(ref CodedInputReader ctx, IMessage message)
         {
-            if (state.recursionDepth >= state.recursionLimit)
+            if (ctx.state.recursionDepth >= ctx.state.recursionLimit)
             {
                 throw InvalidProtocolBufferException.RecursionLimitExceeded();
             }
-            ++state.recursionDepth;
+            ++ctx.state.recursionDepth;
             
-            ReadRawMessage(ref buffer, ref state, message);
+            ReadRawMessage(ref ctx, message);
 
-            --state.recursionDepth;
+            --ctx.state.recursionDepth;
         }
 
-        public static void ReadRawMessage(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state, IMessage message)
+        public static void ReadRawMessage(ref CodedInputReader ctx, IMessage message)
         {
-            // TODO: choose method to invoke based on message type...
-            //if (message is IBufferMessage)
-            //{
-            //    // TODO: call internal parse...
-            //}
-            //else
+            if (message is IBufferMessage)
             {
-                if (state.codedInputStream == null)
+                var bufferMessage = message as IBufferMessage;
+                bufferMessage.MergeFrom(ref ctx);
+            }
+            else
+            {
+                if (ctx.state.codedInputStream == null)
                 {
                     // TODO: improve the msg
                     throw new InvalidProtocolBufferException("Cannot parse message with current parse context. Do you need to regenerate the code?");
                 }
-                message.MergeFrom(state.codedInputStream);
+                message.MergeFrom(ctx.state.codedInputStream);
             }
         }
 
