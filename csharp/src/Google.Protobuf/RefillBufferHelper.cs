@@ -52,19 +52,32 @@ namespace Google.Protobuf
         private ReadOnlySequence<byte>.Enumerator readOnlySequenceEnumerator;
         private Stream inputStream;
         private byte[] inputStreamBuffer;
-        public RefillBufferHelper(ReadOnlySequence<byte> sequence)
+        public RefillBufferHelper(ReadOnlySequence<byte> sequence, ref ReadOnlySpan<byte> firstSpan)
         {
-            refillBufferDelegate = RefillFromReadOnlySequence;
-            totalLength = (int) sequence.Length;
-            readOnlySequenceEnumerator = sequence.GetEnumerator();
             inputStream = null;
             inputStreamBuffer = null;
+            if (sequence.IsSingleSegment)
+            {
+                firstSpan = sequence.First.Span;
+                refillBufferDelegate = RefillSingleSegment;
+                totalLength = firstSpan.Length;
+                readOnlySequenceEnumerator = default;
+            }
+            else
+            {
+                // TODO(jtattermusch): try to initialize th fhe first segment, otherwise the
+                // very first read will result in slowpath (because the first thing to do is to
+                // refill to get the first buffer segment)
+                firstSpan = default;
+                refillBufferDelegate = RefillFromReadOnlySequence;
+                totalLength = (int) sequence.Length;
+                readOnlySequenceEnumerator = sequence.GetEnumerator();
+            }
         }
 
         public RefillBufferHelper(Stream inputStream, byte[] inputStreamBuffer)
         {
-            // TODO: if inputStream == null, use a different simplified approach for refilling.
-            refillBufferDelegate = RefillFromStream;
+            refillBufferDelegate = inputStream != null ? RefillFromStream : RefillSingleSegment;
             totalLength = inputStream == null ? (int?)inputStreamBuffer.Length : null;
             readOnlySequenceEnumerator = default;
             this.inputStream = inputStream;
@@ -444,6 +457,40 @@ namespace Google.Protobuf
         }
 
         private static RefillBufferDelegate RefillFromStream = new RefillBufferDelegate(RefillFromStreamImpl);
+
+        // used when the first buffer segment has all the data
+        private static bool RefillSingleSegmentImpl(ref RefillBufferHelper helper, ref ReadOnlySpan<byte> buffer, ref ParserInternalState state, bool mustSucceed)
+        {
+            // TODO: remove duplication between FromReadOnlySequence and FromStream
+            if (state.bufferPos < state.bufferSize)
+            {
+                throw new InvalidOperationException("RefillBuffer() called when buffer wasn't empty.");
+            }
+
+            if (state.totalBytesRetired + state.bufferSize == state.currentLimit)
+            {
+                // Oops, we hit a limit.
+                if (mustSucceed)
+                {
+                    throw InvalidProtocolBufferException.TruncatedMessage();
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            if (mustSucceed)
+            {
+                throw InvalidProtocolBufferException.TruncatedMessage();
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        private static RefillBufferDelegate RefillSingleSegment = new RefillBufferDelegate(RefillSingleSegmentImpl);
 
         private static void RecomputeBufferSizeAfterLimit(ref ParserInternalState state)
         {

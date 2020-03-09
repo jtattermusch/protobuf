@@ -578,7 +578,8 @@ namespace Google.Protobuf
         /// </remarks>
         public int ReadLength()
         {
-            return (int) ReadRawVarint32();
+            var span = new ReadOnlySpan<byte>(buffer);
+            return ParsingPrimitivesClassic.ParseLength(ref span, ref state);
         }
 
         /// <summary>
@@ -818,16 +819,16 @@ namespace Google.Protobuf
             return ParsingPrimitivesClassic.ReadRawBytes(ref span, ref state, size);
         }
 
-        /// <summary>
-        /// Reads and discards <paramref name="size"/> bytes.
-        /// </summary>
-        /// <exception cref="InvalidProtocolBufferException">the end of the stream
-        /// or the current limit was reached</exception>
-        private void SkipRawBytes(int size)
-        {
-            var span = new ReadOnlySpan<byte>(buffer);
-            ParsingPrimitivesClassic.SkipRawBytes(ref span, ref state, size);
-        }
+        // /// <summary>
+        // /// Reads and discards <paramref name="size"/> bytes.
+        // /// </summary>
+        // /// <exception cref="InvalidProtocolBufferException">the end of the stream
+        // /// or the current limit was reached</exception>
+        // private void SkipRawBytes(int size)
+        // {
+        //     var span = new ReadOnlySpan<byte>(buffer);
+        //     ParsingPrimitivesClassic.SkipRawBytes(ref span, ref state, size);
+        // }
 
         // Invoked by MergeFrom(CodedInputStream cis)
         public void ReadRawMessage(IMessage message)
