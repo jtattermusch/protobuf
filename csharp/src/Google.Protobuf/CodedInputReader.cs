@@ -87,25 +87,21 @@ namespace Google.Protobuf
 
         internal CodedInputReader(ReadOnlySequence<byte> input, int recursionLimit)
         {
-            //this.reader = new SequenceReader<byte>(input);
-            this.buffer = default;  // start with empty span: //TODO: that causes unnecessary slowdown....
+            this.buffer = default;
             this.state = default;
-            this.state.bufferPos = 0;
-            this.state.bufferSize = 0;  // the very first step is going to be refilling the buffer?
             this.state.lastTag = 0;
             this.state.recursionDepth = 0;
             this.state.sizeLimit = DefaultSizeLimit;
             this.state.recursionLimit = recursionLimit;
             this.state.currentLimit = int.MaxValue;
-            this.state.refillBufferHelper = new RefillBufferHelper(input);
+            this.state.refillBufferHelper = new RefillBufferHelper(input, ref this.buffer);
+            this.state.bufferPos = 0;
+            this.state.bufferSize = this.buffer.Length;
             this.state.codedInputStream = null;
 
             //this.decoder = null;
             this.state.DiscardUnknownFields = false;
             this.state.ExtensionRegistry = null;
-
-            // TODO: reading wrappers won't work without this.
-            //this.state.skipLastFieldAction = () => { SkipLastField(); };
         }
 
         internal CodedInputReader(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
