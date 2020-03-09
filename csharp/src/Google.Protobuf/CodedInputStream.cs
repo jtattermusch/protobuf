@@ -632,12 +632,6 @@ namespace Google.Protobuf
             return ParsingPrimitivesWrappers.ReadUInt32Wrapper(ref span, ref input.state);
         }
 
-        private static uint? ReadUInt32WrapperSlow(CodedInputStream input)
-        {
-            var span = new ReadOnlySpan<byte>(input.buffer);
-            return ParsingPrimitivesWrappers.ReadUInt32WrapperSlow(ref span, ref input.state);
-        }
-
         internal static int? ReadInt32Wrapper(CodedInputStream input)
         {
             var span = new ReadOnlySpan<byte>(input.buffer);
