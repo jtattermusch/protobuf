@@ -49,6 +49,11 @@ namespace Google.Protobuf.Benchmarks
         byte[] manyPrimitiveFieldsByteArray;
         ReadOnlySequence<byte> manyPrimitiveFieldsReadOnlySequence;
 
+        byte[] multipleMsgs;
+        ReadOnlySequence<byte> multipleMsgsReadOnlySequence;
+
+        const int msgCount = 10;
+
         [GlobalSetup]
         public void GlobalSetup()
         {
@@ -56,18 +61,20 @@ namespace Google.Protobuf.Benchmarks
             manyWrapperFieldsReadOnlySequence = new ReadOnlySequence<byte>(manyWrapperFieldsByteArray);
             manyPrimitiveFieldsByteArray = CreateManyPrimitiveFieldsMessage().ToByteArray();
             manyPrimitiveFieldsReadOnlySequence = new ReadOnlySequence<byte>(manyPrimitiveFieldsByteArray);
+            multipleMsgs = CreateMultiplePrimitiveMsgs();
+            multipleMsgsReadOnlySequence = new ReadOnlySequence<byte>(multipleMsgs);
         }
 
         [Benchmark]
         public ManyWrapperFieldsMessage ParseWrapperFieldsFromByteArray()
         {
-            return ManyWrapperFieldsMessage.Parser.ParseFrom(manyWrapperFieldsByteArray);
+           return ManyWrapperFieldsMessage.Parser.ParseFrom(manyWrapperFieldsByteArray);
         }
 
         [Benchmark]
         public ManyWrapperFieldsMessage ParseWrapperFieldsFromNewByteArray()
         {
-            return ManyWrapperFieldsMessage.Parser.ParseFrom(manyWrapperFieldsReadOnlySequence.ToArray());
+           return ManyWrapperFieldsMessage.Parser.ParseFrom(manyWrapperFieldsReadOnlySequence.ToArray());
         }
 
         [Benchmark]
@@ -78,19 +85,50 @@ namespace Google.Protobuf.Benchmarks
         }
 
         [Benchmark]
-        public ManyPrimitiveFieldsMessage ParsePrimitiveFieldsFromByteArray()
+        public long CreateCisOnly_SharedImpl()
+        {
+            CodedInputStream cis = new CodedInputStream(manyPrimitiveFieldsByteArray);
+            return cis.Position;
+        }
+
+        [Benchmark]
+        public ManyPrimitiveFieldsMessage ParsePrimitiveFieldsFromByteArray_SharedImpl()
         {
             return ManyPrimitiveFieldsMessage.Parser.ParseFrom(manyPrimitiveFieldsByteArray);
+        }
+
+         [Benchmark]
+        public ManyPrimitiveFieldsMessage ParsePrimitiveFieldsFromByteArray_MultipleMessages_SharedImpl()
+        {
+            CodedInputStream cis = new CodedInputStream(multipleMsgs);
+            var msg = new ManyPrimitiveFieldsMessage();
+            for (int i = 0; i < msgCount; i++)
+            {
+                cis.ReadMessage(msg);
+            }
+            return msg;
+        }
+
+        [Benchmark]
+        public ManyPrimitiveFieldsMessage ParsePrimitiveFieldsFromRos_MultipleMessages_SharedImpl()
+        {
+            CodedInputReader ctx = new CodedInputReader(multipleMsgsReadOnlySequence);
+            var msg = new ManyPrimitiveFieldsMessage();
+            for (int i = 0; i < msgCount; i++)
+            {
+                ctx.ReadMessage(msg);
+            }
+            return msg;
         }
 
         [Benchmark]
         public ManyPrimitiveFieldsMessage ParsePrimitiveFieldsFromNewByteArray()
         {
-            return ManyPrimitiveFieldsMessage.Parser.ParseFrom(manyPrimitiveFieldsByteArray.ToArray());
+           return ManyPrimitiveFieldsMessage.Parser.ParseFrom(manyPrimitiveFieldsByteArray.ToArray());
         }
 
         [Benchmark]
-        public ManyPrimitiveFieldsMessage ParsePrimitiveFieldsFromReadOnlySequence()
+        public ManyPrimitiveFieldsMessage ParsePrimitiveFieldsFromReadOnlySequence_SharedImpl()
         {
             var input = new CodedInputReader(manyPrimitiveFieldsReadOnlySequence);
             return ManyPrimitiveFieldsMessage.Parser.ParseFrom(ref input);
@@ -118,9 +156,18 @@ namespace Google.Protobuf.Benchmarks
             // Example data match data of an internal benchmarks
             return new ManyPrimitiveFieldsMessage()
             {
-                Int64Field19 = 123,
-                Int64Field37 = 1000032,
-                Int64Field26 = 3453524500,
+                // Int64Field4 = 15,
+                // Int64Field19 = 123,
+                // Int64Field32 = 18,
+                // Int64Field43 = 3424334,
+                // Int64Field37 = 1000032,
+                // Int64Field26 = 3453524500,
+                // Int64Field107 = -100,
+                // Int64Field112 = 32423423423,
+                // Int64Field125 = 3242342342343424,
+                // Int64Field126 = -1,
+                // Int64Field127 = -1,
+                
                 DoubleField79 = 1.2,
                 DoubleField25 = 234,
                 DoubleField9 = 123.3,
@@ -128,6 +175,19 @@ namespace Google.Protobuf.Benchmarks
                 DoubleField7 = 234,
                 DoubleField50 = 2.45
             };
+        }
+
+        private static byte[] CreateMultiplePrimitiveMsgs()
+        {
+            MemoryStream ms = new MemoryStream();
+            CodedOutputStream cos = new CodedOutputStream(ms);
+            for (int i = 0; i < msgCount + 20; i++)
+            {
+                var msg = CreateManyPrimitiveFieldsMessage();
+                cos.WriteMessage(msg);
+            }
+            cos.Flush();
+            return ms.ToArray();
         }
     }
 }
