@@ -123,7 +123,7 @@ namespace Google.Protobuf
         {
             if (state.bufferPos + 5 > state.bufferSize)
             {
-                return ReadRawVarint32SlowPath(ref buffer, ref state);
+                return ParseRawVarint32SlowPath(ref buffer, ref state);
             }
 
             int tmp = buffer[state.bufferPos++];
@@ -175,7 +175,7 @@ namespace Google.Protobuf
             return (uint)result;
         }
 
-        private static uint ReadRawVarint32SlowPath(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
+        private static uint ParseRawVarint32SlowPath(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {
             int tmp = ReadRawByte(ref buffer, ref state);
             if (tmp < 128)
