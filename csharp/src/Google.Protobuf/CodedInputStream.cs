@@ -67,57 +67,21 @@ namespace Google.Protobuf
         /// </summary>
         private readonly byte[] buffer;
 
-        private ParserInternalState state;
-
-        // /// <summary>
-        // /// The index of the buffer at which we need to refill from the stream (if there is one).
-        // /// </summary>
-        // private int bufferSize;
-
-        // private int bufferSizeAfterLimit = 0;
-        // /// <summary>
-        // /// The position within the current buffer (i.e. the next byte to read)
-        // /// </summary>
-        // private int bufferPos = 0;
-
         /// <summary>
         /// The stream to read further input from, or null if the byte array buffer was provided
         /// directly on construction, with no further data available.
         /// </summary>
         private readonly Stream input;
 
-        // /// <summary>
-        // /// The last tag we read. 0 indicates we've read to the end of the stream
-        // /// (or haven't read anything yet).
-        // /// </summary>
-        // private uint lastTag = 0;
-
-        // /// <summary>
-        // /// The next tag, used to store the value read by PeekTag.
-        // /// </summary>
-        // private uint nextTag = 0;
-        // private bool hasNextTag = false;
+        /// <summary>
+        /// The parser state is kept separately so that other parse implementations can reuse the same
+        /// parsing primitives.
+        /// </summary>
+        private ParserInternalState state;
 
         internal const int DefaultRecursionLimit = 100;
         internal const int DefaultSizeLimit = Int32.MaxValue;
         internal const int BufferSize = 4096;
-
-        // /// <summary>
-        // /// The total number of bytes read before the current buffer. The
-        // /// total bytes read up to the current position can be computed as
-        // /// totalBytesRetired + bufferPos.
-        // /// </summary>
-        // private int totalBytesRetired = 0;
-
-        // /// <summary>
-        // /// The absolute position of the end of the current message.
-        // /// </summary> 
-        // private int currentLimit = int.MaxValue;
-
-        // private int recursionDepth = 0;
-
-        // private readonly int recursionLimit;
-        // private readonly int sizeLimit;
 
         #region Construction
         // Note that the checks are performed such that we don't end up checking obviously-valid things
@@ -789,7 +753,11 @@ namespace Google.Protobuf
             return ParsingPrimitives.ReadRawBytes(ref span, ref state, size);
         }
 
-        // Invoked by MergeFrom(CodedInputStream cis)
+        /// <summary>
+        /// Reads a top-level message or a nested message after the limits for this message have been pushed.
+        /// (parser will proceed until the end of the current limit)
+        /// NOTE: this method needs to be public because it's invoked by the generated code - e.g. msg.MergeFrom(CodedInputStream input) method
+        /// </summary>
         public void ReadRawMessage(IMessage message)
         {
             var span = new ReadOnlySpan<byte>(buffer);
