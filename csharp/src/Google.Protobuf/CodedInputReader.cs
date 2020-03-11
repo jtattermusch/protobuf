@@ -191,20 +191,6 @@ namespace Google.Protobuf
             state.hasNextTag = true;
             state.lastTag = savedLast; // Undo the side effect of ReadTag
             return state.nextTag;
-
-            // uint previousTag = lastTag;
-            // long consumed = reader.Consumed;
-
-            // uint tag = ReadTag();
-
-            // long rewindCount = reader.Consumed - consumed;
-            // if (rewindCount > 0)
-            // {
-            //     reader.Rewind(rewindCount);
-            // }
-            // lastTag = previousTag;
-
-            // return tag;
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -226,59 +212,7 @@ namespace Google.Protobuf
 
         public uint ReadTag()
         {
-            // TODO: looks like we need a different variant of ParseTag here???
-
             return RefillBufferHelper.ParseTag(ref buffer, ref state);
-            // if (ReachedLimit)
-            // {
-            //     lastTag = 0;
-            //     return 0;
-            // }
-
-            // // Optimize for common case of a 2 byte tag that is in the current span
-            // var current = LimitedUnreadSpan;
-            // if (current.Length >= 2)
-            // {
-            //     int tmp = current[0];
-            //     if (tmp < 128)
-            //     {
-            //         lastTag = (uint)tmp;
-            //         reader.Advance(1);
-            //     }
-            //     else
-            //     {
-            //         int result = tmp & 0x7f;
-            //         if ((tmp = current[1]) < 128)
-            //         {
-            //             result |= tmp << 7;
-            //             lastTag = (uint)result;
-            //             reader.Advance(2);
-            //         }
-            //         else
-            //         {
-            //             // Nope, go the potentially slow route.
-            //             lastTag = ReadRawVarint32();
-            //         }
-            //     }
-            // }
-            // else
-            // {
-            //     if (IsAtEnd)
-            //     {
-            //         lastTag = 0;
-            //         return 0;
-            //     }
-
-            //     lastTag = ReadRawVarint32();
-            // }
-
-            // if (WireFormat.GetTagFieldNumber(lastTag) == 0)
-            // {
-            //     // If we actually read a tag with a field of 0, that's not a valid tag.
-            //     ThrowInvalidTagException();
-            // }
-
-            // return lastTag;
         }
 
         /// <summary>
@@ -302,15 +236,6 @@ namespace Google.Protobuf
         private void SkipRawBytes(int length)
         {
             ParsingPrimitives.SkipRawBytes(ref buffer, ref state, length);
-
-            // if (length < 0)
-            // {
-            //     throw InvalidProtocolBufferException.NegativeSize();
-            // }
-
-            // CheckRequestedDataAvailable(length);
-
-            // reader.Advance(length);
         }
 
         /// <summary>
@@ -497,24 +422,6 @@ namespace Google.Protobuf
         {
             // TODO: add a fallback if IMessage does not implement IBufferMessage 
             RefillBufferHelper.ReadMessage(ref this, message);
-
-
-            // int length = ReadLength();
-            // if (state.recursionDepth >= state.recursionLimit)
-            // {
-            //     throw InvalidProtocolBufferException.RecursionLimitExceeded();
-            // }
-            // int oldLimit = PushLimit(length);
-            // ++state.recursionDepth;
-            // builder.MergeFrom(ref this);
-            // CheckReadEndOfInputTag();
-            // // Check that we've read exactly as much data as expected.
-            // if (!ReachedLimit)
-            // {
-            //     throw InvalidProtocolBufferException.TruncatedMessage();
-            // }
-            // --state.recursionDepth;
-            // PopLimit(oldLimit);
         }
 
         /// <summary>
@@ -524,14 +431,6 @@ namespace Google.Protobuf
         public void ReadGroup(IMessage message)
         {
             RefillBufferHelper.ReadGroup(ref this, message);
-
-            // if (state.recursionDepth >= state.recursionLimit)
-            // {
-            //     throw InvalidProtocolBufferException.RecursionLimitExceeded();
-            // }
-            // ++state.recursionDepth;
-            // builder.MergeFrom(ref this);
-            // --state.recursionDepth;
         }
 
         /// <summary>
@@ -647,26 +546,6 @@ namespace Google.Protobuf
                 return true;
             }
             return false;
-
-            // uint previousTag = state.lastTag;
-            // long consumed = reader.Consumed;
-
-            // uint newTag = ReadTag();
-            // if (newTag == tag)
-            // {
-            //     // Match so consume tag
-            //     return true;
-            // }
-
-            // // No match so rewind
-            // long rewindCount = reader.Consumed - consumed;
-            // if (rewindCount > 0)
-            // {
-            //     reader.Rewind(rewindCount);
-            // }
-            // lastTag = previousTag;
-
-            // return false;
         }
 
         internal static float? ReadFloatWrapperLittleEndian(ref CodedInputReader input)
@@ -729,71 +608,6 @@ namespace Google.Protobuf
         #region Underlying reading primitives
 
         // /// <summary>
-        // /// Same code as ReadRawVarint32, but read each byte from reader individually
-        // /// </summary>
-        // private uint SlowReadRawVarint32()
-        // {
-        //     byte value = ReadByteSlow();
-        //     int tmp = value;
-        //     if (tmp < 128)
-        //     {
-        //         return (uint)tmp;
-        //     }
-        //     int result = tmp & 0x7f;
-        //     value = ReadByteSlow();
-        //     tmp = value;
-        //     if (tmp < 128)
-        //     {
-        //         result |= tmp << 7;
-        //     }
-        //     else
-        //     {
-        //         result |= (tmp & 0x7f) << 7;
-        //         value = ReadByteSlow();
-        //         tmp = value;
-        //         if (tmp < 128)
-        //         {
-        //             result |= tmp << 14;
-        //         }
-        //         else
-        //         {
-        //             result |= (tmp & 0x7f) << 14;
-        //             value = ReadByteSlow();
-        //             tmp = value;
-        //             if (tmp < 128)
-        //             {
-        //                 result |= tmp << 21;
-        //             }
-        //             else
-        //             {
-        //                 result |= (tmp & 0x7f) << 21;
-        //                 value = ReadByteSlow();
-        //                 tmp = value;
-        //                 result |= tmp << 28;
-        //                 if (tmp >= 128)
-        //                 {
-        //                     // Discard upper 32 bits.
-        //                     // Note that this has to use ReadByteSlow() as we only ensure we've
-        //                     // got at least 5 bytes at the start of the method. This lets us
-        //                     // use the fast path in more cases, and we rarely hit this section of code.
-        //                     for (int i = 0; i < 5; i++)
-        //                     {
-        //                         value = ReadByteSlow();
-        //                         tmp = value;
-        //                         if (tmp < 128)
-        //                         {
-        //                             return (uint)result;
-        //                         }
-        //                     }
-        //                     throw InvalidProtocolBufferException.MalformedVarint();
-        //                 }
-        //             }
-        //         }
-        //     }
-        //     return (uint)result;
-        // }
-
-        // /// <summary>
         // /// Reads a raw Varint from the input. If larger than 32 bits, discard the upper bits.
         // /// This method is optimised for the case where we've got lots of data in the buffer.
         // /// That means we can check the size just once, then just read directly from the buffer
@@ -804,88 +618,6 @@ namespace Google.Protobuf
         {
             return ParsingPrimitives.ParseRawVarint32(ref buffer, ref state);
         }
-        //     var current = LimitedUnreadSpan;
-
-        //     if (current.Length < 5)
-        //     {
-        //         return SlowReadRawVarint32();
-        //     }
-
-        //     int bufferPos = 0;
-        //     int tmp = current[bufferPos++];
-        //     if (tmp < 128)
-        //     {
-        //         reader.Advance(bufferPos);
-        //         return (uint)tmp;
-        //     }
-        //     int result = tmp & 0x7f;
-        //     if ((tmp = current[bufferPos++]) < 128)
-        //     {
-        //         result |= tmp << 7;
-        //     }
-        //     else
-        //     {
-        //         result |= (tmp & 0x7f) << 7;
-        //         if ((tmp = current[bufferPos++]) < 128)
-        //         {
-        //             result |= tmp << 14;
-        //         }
-        //         else
-        //         {
-        //             result |= (tmp & 0x7f) << 14;
-        //             if ((tmp = current[bufferPos++]) < 128)
-        //             {
-        //                 result |= tmp << 21;
-        //             }
-        //             else
-        //             {
-        //                 result |= (tmp & 0x7f) << 21;
-        //                 result |= (tmp = current[bufferPos++]) << 28;
-        //                 if (tmp >= 128)
-        //                 {
-        //                     reader.Advance(bufferPos);
-
-        //                     // Discard upper 32 bits.
-        //                     // Note that this has to use ReadByteSlow() as we only ensure we've
-        //                     // got at least 5 bytes at the start of the method. This lets us
-        //                     // use the fast path in more cases, and we rarely hit this section of code.
-        //                     for (int i = 0; i < 5; i++)
-        //                     {
-        //                         var value = ReadByteSlow();
-        //                         tmp = value;
-        //                         if (tmp < 128)
-        //                         {
-        //                             return (uint)result;
-        //                         }
-        //                     }
-        //                     throw InvalidProtocolBufferException.MalformedVarint();
-        //                 }
-        //             }
-        //         }
-        //     }
-        //     reader.Advance(bufferPos);
-        //     return (uint)result;
-        // }
-
-        // /// <summary>
-        // /// Same code as ReadRawVarint64, but read each byte from reader individually
-        // /// </summary>
-        // private ulong SlowReadRawVarint64()
-        // {
-        //     int shift = 0;
-        //     ulong result = 0;
-        //     while (shift < 64)
-        //     {
-        //         byte b = ReadByteSlow();
-        //         result |= (ulong)(b & 0x7F) << shift;
-        //         if ((b & 0x80) == 0)
-        //         {
-        //             return result;
-        //         }
-        //         shift += 7;
-        //     }
-        //     throw InvalidProtocolBufferException.MalformedVarint();
-        // }
 
         // /// <summary>
         // /// Reads a raw varint from the input.
@@ -895,37 +627,6 @@ namespace Google.Protobuf
         {
             return ParsingPrimitives.ParseRawVarint64(ref buffer, ref state);
         }
-        //     var current = LimitedUnreadSpan;
-
-        //     if (current.Length < 10)
-        //     {
-        //         return SlowReadRawVarint64();
-        //     }
-
-        //     int bufferPos = 0;
-        //     ulong result = current[bufferPos++];
-        //     if (result < 128)
-        //     {
-        //         reader.Advance(bufferPos);
-        //         return result;
-        //     }
-        //     result &= 0x7f;
-        //     int shift = 7;
-        //     do
-        //     {
-        //         byte b = current[bufferPos++];
-        //         result |= (ulong)(b & 0x7F) << shift;
-        //         if (b < 0x80)
-        //         {
-        //             reader.Advance(bufferPos);
-        //             return result;
-        //         }
-        //         shift += 7;
-        //     }
-        //     while (shift < 64);
-
-        //     throw InvalidProtocolBufferException.MalformedVarint();
-        // }
 
         // /// <summary>
         // /// Reads a 32-bit little-endian integer from the input.
@@ -935,34 +636,6 @@ namespace Google.Protobuf
         {
             return ParsingPrimitives.ParseRawLittleEndian32(ref buffer, ref state);
         }
-        //     const int length = 4;
-
-        //     ReadOnlySpan<byte> current = LimitedUnreadSpan;
-        //     if (current.Length >= length)
-        //     {
-        //         // Fast path. All data is in the current span.
-        //         reader.Advance(length);
-
-        //         return BinaryPrimitives.ReadUInt32LittleEndian(current);
-        //     }
-        //     else
-        //     {
-        //         return ReadRawLittleEndian32Slow();
-        //     }
-        // }
-
-        // private unsafe uint ReadRawLittleEndian32Slow()
-        // {
-        //     const int length = 4;
-
-        //     byte* buffer = stackalloc byte[length];
-        //     Span<byte> tempSpan = new Span<byte>(buffer, length);
-
-        //     CopyToSlow(tempSpan);
-        //     reader.Advance(length);
-
-        //     return BinaryPrimitives.ReadUInt32LittleEndian(tempSpan);
-        // }
 
         // /// <summary>
         // /// Reads a 64-bit little-endian integer from the input.
@@ -972,34 +645,6 @@ namespace Google.Protobuf
         {
             return ParsingPrimitives.ParseRawLittleEndian64(ref buffer, ref state);
         }
-        //     const int length = 8;
-
-        //     ReadOnlySpan<byte> current = LimitedUnreadSpan;
-        //     if (current.Length >= length)
-        //     {
-        //         // Fast path. All data is in the current span.
-        //         reader.Advance(length);
-
-        //         return BinaryPrimitives.ReadUInt64LittleEndian(current);
-        //     }
-        //     else
-        //     {
-        //         return ReadRawLittleEndian64Slow();
-        //     }
-        // }
-
-        // private unsafe ulong ReadRawLittleEndian64Slow()
-        // {
-        //     const int length = 8;
-
-        //     byte* buffer = stackalloc byte[length];
-        //     Span<byte> tempSpan = new Span<byte>(buffer, length);
-
-        //     CopyToSlow(tempSpan);
-        //     reader.Advance(length);
-
-        //     return BinaryPrimitives.ReadUInt64LittleEndian(tempSpan);
-        // }
         #endregion
 
         /// <summary>
@@ -1049,76 +694,6 @@ namespace Google.Protobuf
                 throw InvalidProtocolBufferException.MoreDataAvailable();
             }
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ThrowEndOfInputIfFalse(bool condition)
-        {
-            if (!condition)
-            {
-                ThrowEndOfInput();
-                return;
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void ThrowEndOfInput()
-        {
-            throw InvalidProtocolBufferException.TruncatedMessage();
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void ThrowTruncatedMessage()
-        {
-            throw InvalidProtocolBufferException.TruncatedMessage();
-        }
-
-        // private byte ReadByteSlow()
-        // {
-        //     ThrowEndOfInputIfFalse(reader.TryRead(out byte b));
-
-        //     if (reader.Consumed > currentLimit)
-        //     {
-        //         ThrowTruncatedMessage();
-        //     }
-
-        //     return b;
-        // }
-
-        // private void CheckRequestedDataAvailable(int length)
-        // {
-        //     if (length + reader.Consumed > currentLimit)
-        //     {
-        //         // Read to the end of the limit.
-        //         reader.Advance(Math.Min(currentLimit, reader.Remaining));
-        //         // Then fail.
-        //         ThrowTruncatedMessage();
-        //     }
-        //     if (reader.Remaining < length)
-        //     {
-        //         // Read to the end of the content.
-        //         reader.Advance(reader.Remaining);
-        //         // Then fail.
-        //         ThrowEndOfInput();
-        //     }
-        // }
-
-        // private void CopyToSlow(Span<byte> destination)
-        // {
-        //     CheckRequestedDataAvailable(destination.Length);
-
-        //     reader.TryCopyTo(destination);
-        // }
-
-        // private ReadOnlySpan<byte> LimitedUnreadSpan
-        // {
-        //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //     get
-        //     {
-        //         // Get the current unread span content. This content is limited to content for the current message.
-        //         // When all the content we want to read is within the span's length then we can go down a fast path.
-        //         return reader.CurrentSpan.Slice(reader.CurrentSpanIndex, Math.Min(currentLimit, reader.CurrentSpan.Length) - reader.CurrentSpanIndex);
-        //     }
-        // }
     }
 }
 #endif
