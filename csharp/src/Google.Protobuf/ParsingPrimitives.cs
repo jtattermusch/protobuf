@@ -44,12 +44,17 @@ using Google.Protobuf.Collections;
 namespace Google.Protobuf
 {
     /// <summary>
-    /// Fast parsing primitives
+    /// Primitives for parsing protobuf wire format.
     /// </summary>
-    public static class ParsingPrimitivesClassic
+    internal static class ParsingPrimitives
     {
-        // TODO: move zigzag decode methods
-        
+        /// <summary>
+        /// Reads a length for length-delimited data.
+        /// </summary>
+        /// <remarks>
+        /// This is internally just reading a varint, but this method exists
+        /// to make the calling code clearer.
+        /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 
         public static int ParseLength(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
@@ -57,6 +62,9 @@ namespace Google.Protobuf
             return (int)ParseRawVarint32(ref buffer, ref state);
         }
 
+        /// <summary>
+        /// Parses a raw varint.
+        /// </summary>
         public static ulong ParseRawVarint64(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {
             if (state.bufferPos + 10 > state.bufferSize)
@@ -105,6 +113,12 @@ namespace Google.Protobuf
             throw InvalidProtocolBufferException.MalformedVarint();
         }
 
+        /// <summary>
+        /// Parses a raw Varint.  If larger than 32 bits, discard the upper bits.
+        /// This method is optimised for the case where we've got lots of data in the buffer.
+        /// That means we can check the size just once, then just read directly from the buffer
+        /// without constant rechecking of the buffer length.
+        /// </summary>
         public static uint ParseRawVarint32(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {
             if (state.bufferPos + 5 > state.bufferSize)
@@ -209,6 +223,9 @@ namespace Google.Protobuf
             return (uint) result;
         }
 
+        /// <summary>
+        /// Parses a 32-bit little-endian integer.
+        /// </summary>
         public static uint ParseRawLittleEndian32(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {
             const int length = sizeof(uint);
@@ -230,6 +247,9 @@ namespace Google.Protobuf
             return b1 | (b2 << 8) | (b3 << 16) | (b4 << 24);
         }
 
+        /// <summary>
+        /// Parses a 64-bit little-endian integer.
+        /// </summary>
         public static ulong ParseRawLittleEndian64(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {
             const int length = sizeof(ulong);
@@ -256,12 +276,14 @@ namespace Google.Protobuf
                     | (b5 << 32) | (b6 << 40) | (b7 << 48) | (b8 << 56);
         }
 
+        /// <summary>
+        /// Parses a double value.
+        /// </summary>
         public static double ParseDouble(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {
             const int length = sizeof(double);
             if (!BitConverter.IsLittleEndian || state.bufferPos + length > state.bufferSize)
             {
-                // TODO(jtattermusch): how fast is Int64BitsToDouble?
                 return BitConverter.Int64BitsToDouble((long)ParseRawLittleEndian64(ref buffer, ref state));
             }
             // ReadUnaligned uses processor architecture for endianness.
@@ -270,6 +292,9 @@ namespace Google.Protobuf
             return result;
         }
 
+        /// <summary>
+        /// Parses a float value.
+        /// </summary>
         public static float ParseFloat(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {
             const int length = sizeof(float);
@@ -301,7 +326,12 @@ namespace Google.Protobuf
             return Unsafe.ReadUnaligned<float>(ref MemoryMarshal.GetReference(tempSpan));
         }
 
-        // TODO: move to different helper class
+        /// <summary>
+        /// Reads a fixed size of bytes from the input.
+        /// </summary>
+        /// <exception cref="InvalidProtocolBufferException">
+        /// the end of the stream or the current limit was reached
+        /// </exception>
         public static byte[] ReadRawBytes(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state, int size)
         {
             if (size < 0)
@@ -403,6 +433,11 @@ namespace Google.Protobuf
             }
         }
 
+        /// <summary>
+        /// Reads and discards <paramref name="size"/> bytes.
+        /// </summary>
+        /// <exception cref="InvalidProtocolBufferException">the end of the stream
+        /// or the current limit was reached</exception>
         public static void SkipRawBytes(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state, int size)
         {
             if (size < 0)
@@ -444,6 +479,12 @@ namespace Google.Protobuf
             }
         }
 
+        /// <summary>
+        /// Reads a UTF-8 string from the next "length" bytes.
+        /// </summary>
+        /// <exception cref="InvalidProtocolBufferException">
+        /// the end of the stream or the current limit was reached
+        /// </exception>
         public static string ReadRawString(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state, int length)
         {
             // No need to read any data for an empty string.
@@ -482,6 +523,15 @@ namespace Google.Protobuf
             return buffer[state.bufferPos++];
         }
 
+        /// <summary>
+        /// Reads a varint from the input one byte at a time, so that it does not
+        /// read any bytes after the end of the varint. If you simply wrapped the
+        /// stream in a CodedInputStream and used ReadRawVarint32(Stream)
+        /// then you would probably end up reading past the end of the varint since
+        /// CodedInputStream buffers its input.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
         public static uint ReadRawVarint32(Stream input)
         {
             int result = 0;
@@ -513,8 +563,34 @@ namespace Google.Protobuf
                 }
             }
             throw InvalidProtocolBufferException.MalformedVarint();
-        } 
+        }
 
-        
+        /// <summary>
+        /// Decode a 32-bit value with ZigZag encoding.
+        /// </summary>
+        /// <remarks>
+        /// ZigZag encodes signed integers into values that can be efficiently
+        /// encoded with varint.  (Otherwise, negative values must be 
+        /// sign-extended to 32 bits to be varint encoded, thus always taking
+        /// 5 bytes on the wire.)
+        /// </remarks>
+        public static int DecodeZigZag32(uint n)
+        {
+            return (int)(n >> 1) ^ -(int)(n & 1);
+        }
+
+        /// <summary>
+        /// Decode a 64-bit value with ZigZag encoding.
+        /// </summary>
+        /// <remarks>
+        /// ZigZag encodes signed integers into values that can be efficiently
+        /// encoded with varint.  (Otherwise, negative values must be 
+        /// sign-extended to 64 bits to be varint encoded, thus always taking
+        /// 10 bytes on the wire.)
+        /// </remarks>
+        public static long DecodeZigZag64(ulong n)
+        {
+            return (long)(n >> 1) ^ -(long)(n & 1);
+        }
     }
 }
