@@ -498,18 +498,38 @@ namespace Google.Protobuf
                 throw InvalidProtocolBufferException.NegativeSize();
             }
 
-            // TODO: support fast string parsing
-            // with GOOGLE_PROTOBUF_SUPPORT_FAST_STRING
+#if GOOGLE_PROTOBUF_SUPPORT_FAST_STRING
+            if (length <= state.bufferSize - state.bufferPos && length > 0)
+            {
+                // Fast path: all bytes to decode appear in the same span.
+                ReadOnlySpan<byte> data = buffer.Slice(state.bufferPos, length);
 
-            //if (length <= state.bufferSize - state.bufferPos && length > 0)
+                string value;
+                unsafe
+                {
+                    fixed (byte* sourceBytes = &MemoryMarshal.GetReference(data))
+                    {
+                        value = CodedOutputStream.Utf8Encoding.GetString(sourceBytes, length);
+                    }
+                }
+
+                state.bufferPos += length;
+                return value;
+            }
+#endif
+
+            // TODO: what if GOOGLE_PROTOBUF_SUPPORT_FAST_STRING is not supported?
+            // -> can we still try to grab an array from the span?
+            // if (length <= state.bufferSize - state.bufferPos && length > 0)
             // {
-            //     // Fast path:  We already have the bytes in a contiguous buffer, so
-            //     //   just copy directly from it.
-            //     String result = CodedOutputStream.Utf8Encoding.GetString(buffer, state.bufferPos, length);
-            //     state.bufferPos += length;
-            //     return result;
+            //      // Fast path:  We already have the bytes in a contiguous buffer, so
+            //      //   just copy directly from it.
+            //      String result = CodedOutputStream.Utf8Encoding.GetString(buffer, state.bufferPos, length);
+            //      state.bufferPos += length;
+            //      return result;
             // }
 
+            // TODO: creating a char[] and decoding into it and then creating a string from that array might be more efficient
             // Slow path: Build a byte array first then copy it.
             return CodedOutputStream.Utf8Encoding.GetString(ReadRawBytes(ref buffer, ref state, length), 0, length);
         }
