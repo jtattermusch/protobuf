@@ -301,7 +301,7 @@ namespace Google.Protobuf
 
         private void SkipRawBytes(int length)
         {
-            ParsingPrimitivesClassic.SkipRawBytes(ref buffer, ref state, length);
+            ParsingPrimitives.SkipRawBytes(ref buffer, ref state, length);
 
             // if (length < 0)
             // {
@@ -328,7 +328,7 @@ namespace Google.Protobuf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double ReadDouble()
         {
-            return ParsingPrimitivesClassic.ParseDouble(ref buffer, ref state);
+            return ParsingPrimitives.ParseDouble(ref buffer, ref state);
         }
 
         /// <summary>
@@ -337,7 +337,7 @@ namespace Google.Protobuf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float ReadFloat()
         {
-            return ParsingPrimitivesClassic.ParseFloat(ref buffer, ref state);
+            return ParsingPrimitives.ParseFloat(ref buffer, ref state);
         }
 
         /// <summary>
@@ -346,7 +346,7 @@ namespace Google.Protobuf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ulong ReadUInt64()
         {
-            return ParsingPrimitivesClassic.ParseRawVarint64(ref buffer, ref state);
+            return ParsingPrimitives.ParseRawVarint64(ref buffer, ref state);
         }
 
         /// <summary>
@@ -355,7 +355,7 @@ namespace Google.Protobuf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long ReadInt64()
         {
-            return (long)ParsingPrimitivesClassic.ParseRawVarint64(ref buffer, ref state);
+            return (long)ParsingPrimitives.ParseRawVarint64(ref buffer, ref state);
         }
 
         /// <summary>
@@ -364,7 +364,7 @@ namespace Google.Protobuf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadInt32()
         {
-            return (int)ParsingPrimitivesClassic.ParseRawVarint32(ref buffer, ref state);
+            return (int)ParsingPrimitives.ParseRawVarint32(ref buffer, ref state);
         }
 
         /// <summary>
@@ -373,7 +373,7 @@ namespace Google.Protobuf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ulong ReadFixed64()
         {
-            return ParsingPrimitivesClassic.ParseRawLittleEndian64(ref buffer, ref state);
+            return ParsingPrimitives.ParseRawLittleEndian64(ref buffer, ref state);
         }
 
         /// <summary>
@@ -382,7 +382,7 @@ namespace Google.Protobuf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint ReadFixed32()
         {
-            return ParsingPrimitivesClassic.ParseRawLittleEndian32(ref buffer, ref state);
+            return ParsingPrimitives.ParseRawLittleEndian32(ref buffer, ref state);
         }
 
         /// <summary>
@@ -391,7 +391,7 @@ namespace Google.Protobuf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ReadBool()
         {
-            return ParsingPrimitivesClassic.ParseRawVarint64(ref buffer, ref state) != 0;
+            return ParsingPrimitives.ParseRawVarint64(ref buffer, ref state) != 0;
         }
 
         /// <summary>
@@ -401,7 +401,7 @@ namespace Google.Protobuf
         public string ReadString()
         {
             int length = ReadLength();
-            return ParsingPrimitivesClassic.ReadRawString(ref buffer, ref state, length);
+            return ParsingPrimitives.ReadRawString(ref buffer, ref state, length);
 
 //             int length = ReadLength();
 
@@ -541,7 +541,7 @@ namespace Google.Protobuf
         public ByteString ReadBytes()
         {
             int length = ReadLength();
-            return ByteString.AttachBytes(ParsingPrimitivesClassic.ReadRawBytes(ref buffer, ref state, length));
+            return ByteString.AttachBytes(ParsingPrimitives.ReadRawBytes(ref buffer, ref state, length));
 
             // if (length == 0)
             // {
@@ -572,7 +572,7 @@ namespace Google.Protobuf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint ReadUInt32()
         {
-            return ParsingPrimitivesClassic.ParseRawVarint32(ref buffer, ref state);
+            return ParsingPrimitives.ParseRawVarint32(ref buffer, ref state);
         }
 
         /// <summary>
@@ -582,7 +582,7 @@ namespace Google.Protobuf
         public int ReadEnum()
         {
             // Currently just a pass-through, but it's nice to separate it logically from WriteInt32.
-            return (int)ParsingPrimitivesClassic.ParseRawVarint32(ref buffer, ref state);
+            return (int)ParsingPrimitives.ParseRawVarint32(ref buffer, ref state);
         }
 
         /// <summary>
@@ -591,7 +591,7 @@ namespace Google.Protobuf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadSFixed32()
         {
-            return (int)ParsingPrimitivesClassic.ParseRawLittleEndian32(ref buffer, ref state);
+            return (int)ParsingPrimitives.ParseRawLittleEndian32(ref buffer, ref state);
         }
 
         /// <summary>
@@ -600,7 +600,7 @@ namespace Google.Protobuf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long ReadSFixed64()
         {
-            return (long)ParsingPrimitivesClassic.ParseRawLittleEndian64(ref buffer, ref state);
+            return (long)ParsingPrimitives.ParseRawLittleEndian64(ref buffer, ref state);
         }
 
         /// <summary>
@@ -609,7 +609,7 @@ namespace Google.Protobuf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadSInt32()
         {
-            return CodedInputStream.DecodeZigZag32(ParsingPrimitivesClassic.ParseRawVarint32(ref buffer, ref state));
+            return ParsingPrimitives.DecodeZigZag32(ParsingPrimitives.ParseRawVarint32(ref buffer, ref state));
         }
 
         /// <summary>
@@ -618,7 +618,7 @@ namespace Google.Protobuf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long ReadSInt64()
         {
-            return CodedInputStream.DecodeZigZag64(ParsingPrimitivesClassic.ParseRawVarint64(ref buffer, ref state));
+            return ParsingPrimitives.DecodeZigZag64(ParsingPrimitives.ParseRawVarint64(ref buffer, ref state));
         }
 
         /// <summary>
@@ -631,7 +631,7 @@ namespace Google.Protobuf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadLength()
         {
-            return (int)ParsingPrimitivesClassic.ParseRawVarint32(ref buffer, ref state);
+            return (int)ParsingPrimitives.ParseRawVarint32(ref buffer, ref state);
         }
 
         /// <summary>
@@ -802,7 +802,7 @@ namespace Google.Protobuf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal uint ReadRawVarint32()
         {
-            return ParsingPrimitivesClassic.ParseRawVarint32(ref buffer, ref state);
+            return ParsingPrimitives.ParseRawVarint32(ref buffer, ref state);
         }
         //     var current = LimitedUnreadSpan;
 
@@ -893,7 +893,7 @@ namespace Google.Protobuf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal ulong ReadRawVarint64()
         {
-            return ParsingPrimitivesClassic.ParseRawVarint64(ref buffer, ref state);
+            return ParsingPrimitives.ParseRawVarint64(ref buffer, ref state);
         }
         //     var current = LimitedUnreadSpan;
 
@@ -933,7 +933,7 @@ namespace Google.Protobuf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal uint ReadRawLittleEndian32()
         {
-            return ParsingPrimitivesClassic.ParseRawLittleEndian32(ref buffer, ref state);
+            return ParsingPrimitives.ParseRawLittleEndian32(ref buffer, ref state);
         }
         //     const int length = 4;
 
@@ -970,7 +970,7 @@ namespace Google.Protobuf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal unsafe ulong ReadRawLittleEndian64()
         {
-            return ParsingPrimitivesClassic.ParseRawLittleEndian64(ref buffer, ref state);
+            return ParsingPrimitives.ParseRawLittleEndian64(ref buffer, ref state);
         }
         //     const int length = 8;
 
