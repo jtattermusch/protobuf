@@ -45,20 +45,42 @@ namespace Google.Protobuf
 {
     
     // warning: this is a mutable struct, so it needs to be only passed as a ref!
-    public struct ParserInternalState
+    internal struct ParserInternalState
     {
-        // the Span representing the current buffer is kept separate so that this doesn't have to be a ref struct and so it can live
+        // NOTE: the Span representing the current buffer is kept separate so that this doesn't have to be a ref struct and so it can live
         // be included in CodedInputStream's internal state
 
-        internal int bufferPos;  // position within the buffer
-        internal int bufferSize;   // size of the current buffer (equals buffer.Length, but is here for similarity with CodedInputStream)
-        internal int bufferSizeAfterLimit;  // 
+        /// <summary>
+        /// The position within the current buffer (i.e. the next byte to read)
+        /// </summary>
+        internal int bufferPos;
+        
+        /// <summary>
+        /// Size of the current buffer
+        /// </summary>
+        internal int bufferSize;
+        
+        /// <summary>
+        /// If we are currently inside a length-delimited block, this is the number of
+        /// bytes in the buffer that are still available once we leave the delimited block.
+        /// </summary>
+        internal int bufferSizeAfterLimit;
 
-        internal int currentLimit;   // The absolute position of the end of the current message (including totalBytesRetired)
-        internal int totalBytesRetired;   // bytes consumed before start of current buffer.
+        /// <summary>
+        /// The absolute position of the end of the current length-delimited block (including totalBytesRetired)
+        /// </summary>
+        internal int currentLimit;
+
+        /// <summary>
+        /// The total number of consumed before the start of the current buffer. The
+        /// total bytes read up to the current position can be computed as
+        /// totalBytesRetired + bufferPos.
+        /// </summary>
+        internal int totalBytesRetired;
+
         internal int recursionDepth;  // current recursion depth
         
-        internal RefillBufferHelper refillBufferHelper;   // TODO: this is too big
+        internal RefillBufferHelper refillBufferHelper;
 
         // TODO: remember if this context is supposed to call MergeFrom(CodedInputStream cis) or MergeFrom(ref ParseContext ....) for submessages.
         // if non-null, the top level parse method was started with given cis as an argument
@@ -77,7 +99,7 @@ namespace Google.Protobuf
         internal uint nextTag;
         internal bool hasNextTag;
 
-        // this is configuration, should be readonly
+        // TODO: these fields are configuration, they should be readonly
         internal int sizeLimit;
         internal int recursionLimit;
         

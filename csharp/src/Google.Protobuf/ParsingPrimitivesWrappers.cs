@@ -48,8 +48,6 @@ namespace Google.Protobuf
     /// </summary>
     internal static class ParsingPrimitivesWrappers
     {
-        // TODO: to implement some of these, we need ReadTag and SkipLastField implementation....
-
         internal static float? ReadFloatWrapperLittleEndian(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {
             // length:1 + tag:1 + value:4 = 6 bytes
