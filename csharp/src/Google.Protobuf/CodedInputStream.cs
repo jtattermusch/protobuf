@@ -393,7 +393,7 @@ namespace Google.Protobuf
         public double ReadDouble()
         {
             var span = new ReadOnlySpan<byte>(buffer);
-            return ParsingPrimitivesClassic.ParseDouble(ref span, ref state);
+            return ParsingPrimitives.ParseDouble(ref span, ref state);
         }
 
         /// <summary>
@@ -402,7 +402,7 @@ namespace Google.Protobuf
         public float ReadFloat()
         {
             var span = new ReadOnlySpan<byte>(buffer);
-            return ParsingPrimitivesClassic.ParseFloat(ref span, ref state);
+            return ParsingPrimitives.ParseFloat(ref span, ref state);
         }
 
         /// <summary>
@@ -460,7 +460,7 @@ namespace Google.Protobuf
         {
             int length = ReadLength();
             var span = new ReadOnlySpan<byte>(buffer);
-            return ParsingPrimitivesClassic.ReadRawString(ref span, ref state, length);
+            return ParsingPrimitives.ReadRawString(ref span, ref state, length);
         }
 
         /// <summary>
@@ -558,7 +558,7 @@ namespace Google.Protobuf
         /// </summary>   
         public int ReadSInt32()
         {
-            return DecodeZigZag32(ReadRawVarint32());
+            return ParsingPrimitives.DecodeZigZag32(ReadRawVarint32());
         }
 
         /// <summary>
@@ -566,7 +566,7 @@ namespace Google.Protobuf
         /// </summary>   
         public long ReadSInt64()
         {
-            return DecodeZigZag64(ReadRawVarint64());
+            return ParsingPrimitives.DecodeZigZag64(ReadRawVarint64());
         }
 
         /// <summary>
@@ -579,7 +579,7 @@ namespace Google.Protobuf
         public int ReadLength()
         {
             var span = new ReadOnlySpan<byte>(buffer);
-            return ParsingPrimitivesClassic.ParseLength(ref span, ref state);
+            return ParsingPrimitives.ParseLength(ref span, ref state);
         }
 
         /// <summary>
@@ -670,7 +670,7 @@ namespace Google.Protobuf
         internal uint ReadRawVarint32()
         {
             var span = new ReadOnlySpan<byte>(buffer);
-            return ParsingPrimitivesClassic.ParseRawVarint32(ref span, ref state);
+            return ParsingPrimitives.ParseRawVarint32(ref span, ref state);
         }
 
         /// <summary>
@@ -684,7 +684,7 @@ namespace Google.Protobuf
         /// <returns></returns>
         internal static uint ReadRawVarint32(Stream input)
         {
-            return ParsingPrimitivesClassic.ReadRawVarint32(input);
+            return ParsingPrimitives.ReadRawVarint32(input);
         }
 
         /// <summary>
@@ -693,7 +693,7 @@ namespace Google.Protobuf
         internal ulong ReadRawVarint64()
         {
             var span = new ReadOnlySpan<byte>(buffer);
-            return ParsingPrimitivesClassic.ParseRawVarint64(ref span, ref state);
+            return ParsingPrimitives.ParseRawVarint64(ref span, ref state);
         }
 
         /// <summary>
@@ -702,7 +702,7 @@ namespace Google.Protobuf
         internal uint ReadRawLittleEndian32()
         {
             var span = new ReadOnlySpan<byte>(buffer);
-            return ParsingPrimitivesClassic.ParseRawLittleEndian32(ref span, ref state);
+            return ParsingPrimitives.ParseRawLittleEndian32(ref span, ref state);
         }
 
         /// <summary>
@@ -711,37 +711,7 @@ namespace Google.Protobuf
         internal ulong ReadRawLittleEndian64()
         {
             var span = new ReadOnlySpan<byte>(buffer);
-            return ParsingPrimitivesClassic.ParseRawLittleEndian64(ref span, ref state);
-        }
-
-        /// <summary>
-        /// Decode a 32-bit value with ZigZag encoding.
-        /// </summary>
-        /// <remarks>
-        /// ZigZag encodes signed integers into values that can be efficiently
-        /// encoded with varint.  (Otherwise, negative values must be 
-        /// sign-extended to 64 bits to be varint encoded, thus always taking
-        /// 10 bytes on the wire.)
-        /// </remarks>
-        internal static int DecodeZigZag32(uint n)
-        {
-            // TODO: move to parsing primitives
-            return (int)(n >> 1) ^ -(int)(n & 1);
-        }
-
-        /// <summary>
-        /// Decode a 32-bit value with ZigZag encoding.
-        /// </summary>
-        /// <remarks>
-        /// ZigZag encodes signed integers into values that can be efficiently
-        /// encoded with varint.  (Otherwise, negative values must be 
-        /// sign-extended to 64 bits to be varint encoded, thus always taking
-        /// 10 bytes on the wire.)
-        /// </remarks>
-        internal static long DecodeZigZag64(ulong n)
-        {
-            // TODO: move to parsing primitives
-            return (long)(n >> 1) ^ -(long)(n & 1);
+            return ParsingPrimitives.ParseRawLittleEndian64(ref span, ref state);
         }
         #endregion
 
@@ -816,19 +786,8 @@ namespace Google.Protobuf
         internal byte[] ReadRawBytes(int size)
         {
             var span = new ReadOnlySpan<byte>(buffer);
-            return ParsingPrimitivesClassic.ReadRawBytes(ref span, ref state, size);
+            return ParsingPrimitives.ReadRawBytes(ref span, ref state, size);
         }
-
-        // /// <summary>
-        // /// Reads and discards <paramref name="size"/> bytes.
-        // /// </summary>
-        // /// <exception cref="InvalidProtocolBufferException">the end of the stream
-        // /// or the current limit was reached</exception>
-        // private void SkipRawBytes(int size)
-        // {
-        //     var span = new ReadOnlySpan<byte>(buffer);
-        //     ParsingPrimitivesClassic.SkipRawBytes(ref span, ref state, size);
-        // }
 
         // Invoked by MergeFrom(CodedInputStream cis)
         public void ReadRawMessage(IMessage message)
@@ -845,35 +804,6 @@ namespace Google.Protobuf
                 state = ctx.state;
             }
         }
-
-        // /// <summary>
-        // /// Abstraction of skipping to cope with streams which can't really skip.
-        // /// </summary>
-        // private void SkipImpl(int amountToSkip)
-        // {
-        //     if (input.CanSeek)
-        //     {
-        //         long previousPosition = input.Position;
-        //         input.Position += amountToSkip;
-        //         if (input.Position != previousPosition + amountToSkip)
-        //         {
-        //             throw InvalidProtocolBufferException.TruncatedMessage();
-        //         }
-        //     }
-        //     else
-        //     {
-        //         byte[] skipBuffer = new byte[Math.Min(1024, amountToSkip)];
-        //         while (amountToSkip > 0)
-        //         {
-        //             int bytesRead = input.Read(skipBuffer, 0, Math.Min(skipBuffer.Length, amountToSkip));
-        //             if (bytesRead <= 0)
-        //             {
-        //                 throw InvalidProtocolBufferException.TruncatedMessage();
-        //             }
-        //             amountToSkip -= bytesRead;
-        //         }
-        //     }
-        // }
 #endregion
     }
 }

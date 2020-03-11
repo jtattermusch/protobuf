@@ -157,7 +157,7 @@ namespace Google.Protobuf
                     {
                         // Nope, rewind and go the potentially slow route.
                         state.bufferPos -= 2;
-                        state.lastTag = ParsingPrimitivesClassic.ParseRawVarint32(ref buffer, ref state);
+                        state.lastTag = ParsingPrimitives.ParseRawVarint32(ref buffer, ref state);
                     }
                 }
             }
@@ -169,7 +169,7 @@ namespace Google.Protobuf
                     return 0;
                 }
 
-                state.lastTag = ParsingPrimitivesClassic.ParseRawVarint32(ref buffer, ref state);
+                state.lastTag = ParsingPrimitives.ParseRawVarint32(ref buffer, ref state);
             }
             if (WireFormat.GetTagFieldNumber(state.lastTag) == 0)
             {
@@ -195,17 +195,17 @@ namespace Google.Protobuf
                     throw new InvalidProtocolBufferException(
                         "SkipLastField called on an end-group tag, indicating that the corresponding start-group was missing");
                 case WireFormat.WireType.Fixed32:
-                    ParsingPrimitivesClassic.ParseRawLittleEndian32(ref buffer, ref state);
+                    ParsingPrimitives.ParseRawLittleEndian32(ref buffer, ref state);
                     break;
                 case WireFormat.WireType.Fixed64:
-                    ParsingPrimitivesClassic.ParseRawLittleEndian64(ref buffer, ref state);
+                    ParsingPrimitives.ParseRawLittleEndian64(ref buffer, ref state);
                     break;
                 case WireFormat.WireType.LengthDelimited:
-                    var length = ParsingPrimitivesClassic.ParseLength(ref buffer, ref state);
-                    ParsingPrimitivesClassic.SkipRawBytes(ref buffer, ref state, length);
+                    var length = ParsingPrimitives.ParseLength(ref buffer, ref state);
+                    ParsingPrimitives.SkipRawBytes(ref buffer, ref state, length);
                     break;
                 case WireFormat.WireType.Varint:
-                    ParsingPrimitivesClassic.ParseRawVarint32(ref buffer, ref state);
+                    ParsingPrimitives.ParseRawVarint32(ref buffer, ref state);
                     break;
             }
         }
@@ -250,7 +250,7 @@ namespace Google.Protobuf
 
         public static void ReadMessage(ref CodedInputReader ctx, IMessage message)
         {
-            int length = ParsingPrimitivesClassic.ParseLength(ref ctx.buffer, ref ctx.state);
+            int length = ParsingPrimitives.ParseLength(ref ctx.buffer, ref ctx.state);
             if (ctx.state.recursionDepth >= ctx.state.recursionLimit)
             {
                 throw InvalidProtocolBufferException.RecursionLimitExceeded();

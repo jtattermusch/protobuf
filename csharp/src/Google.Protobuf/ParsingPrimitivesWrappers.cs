@@ -69,7 +69,7 @@ namespace Google.Protobuf
                     return ReadFloatWrapperSlow(ref buffer, ref state);
                 }
                 state.bufferPos += 2;
-                return ParsingPrimitivesClassic.ParseFloat(ref buffer, ref state);
+                return ParsingPrimitives.ParseFloat(ref buffer, ref state);
             }
             else
             {
@@ -79,7 +79,7 @@ namespace Google.Protobuf
 
         internal static float? ReadFloatWrapperSlow(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {
-            int length = ParsingPrimitivesClassic.ParseLength(ref buffer, ref state);
+            int length = ParsingPrimitives.ParseLength(ref buffer, ref state);
             if (length == 0)
             {
                 return 0F;
@@ -91,7 +91,7 @@ namespace Google.Protobuf
                 // field=1, type=32-bit = tag of 13
                 if (RefillBufferHelper.ParseTag(ref buffer, ref state) == 13)
                 {
-                    result = ParsingPrimitivesClassic.ParseFloat(ref buffer, ref state);
+                    result = ParsingPrimitives.ParseFloat(ref buffer, ref state);
                 }
                 else
                 {
@@ -121,7 +121,7 @@ namespace Google.Protobuf
                     return ReadDoubleWrapperSlow(ref buffer, ref state);
                 }
                 state.bufferPos += 2;
-                return ParsingPrimitivesClassic.ParseDouble(ref buffer, ref state);
+                return ParsingPrimitives.ParseDouble(ref buffer, ref state);
             }
             else
             {
@@ -131,7 +131,7 @@ namespace Google.Protobuf
 
         internal static double? ReadDoubleWrapperSlow(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {
-            int length = ParsingPrimitivesClassic.ParseLength(ref buffer, ref state);
+            int length = ParsingPrimitives.ParseLength(ref buffer, ref state);
             if (length == 0)
             {
                 return 0D;
@@ -143,7 +143,7 @@ namespace Google.Protobuf
                 // field=1, type=64-bit = tag of 9
                 if (RefillBufferHelper.ParseTag(ref buffer, ref state) == 9)
                 {
-                    result = ParsingPrimitivesClassic.ParseDouble(ref buffer, ref state);
+                    result = ParsingPrimitives.ParseDouble(ref buffer, ref state);
                 }
                 else
                 {
@@ -184,7 +184,7 @@ namespace Google.Protobuf
                     state.bufferPos = pos0;
                     return ReadUInt32WrapperSlow(ref buffer, ref state);
                 }
-                var result = ParsingPrimitivesClassic.ParseRawVarint32(ref buffer, ref state);
+                var result = ParsingPrimitives.ParseRawVarint32(ref buffer, ref state);
                 // Verify this message only contained a single field.
                 if (state.bufferPos != finalBufferPos)
                 {
@@ -201,7 +201,7 @@ namespace Google.Protobuf
 
         internal static uint? ReadUInt32WrapperSlow(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {
-            int length = ParsingPrimitivesClassic.ParseLength(ref buffer, ref state);
+            int length = ParsingPrimitives.ParseLength(ref buffer, ref state);
             if (length == 0)
             {
                 return 0;
@@ -213,7 +213,7 @@ namespace Google.Protobuf
                 // field=1, type=varint = tag of 8
                 if (RefillBufferHelper.ParseTag(ref buffer, ref state) == 8)
                 {
-                    result = ParsingPrimitivesClassic.ParseRawVarint32(ref buffer, ref state);
+                    result = ParsingPrimitives.ParseRawVarint32(ref buffer, ref state);
                 }
                 else
                 {
@@ -255,7 +255,7 @@ namespace Google.Protobuf
                     state.bufferPos = pos0;
                     return ReadUInt64WrapperSlow(ref buffer, ref state);
                 }
-                var result = ParsingPrimitivesClassic.ParseRawVarint64(ref buffer, ref state);
+                var result = ParsingPrimitives.ParseRawVarint64(ref buffer, ref state);
                 // Verify this message only contained a single field.
                 if (state.bufferPos != finalBufferPos)
                 {
@@ -274,7 +274,7 @@ namespace Google.Protobuf
         {
             // field=1, type=varint = tag of 8
             const int expectedTag = 8;
-            int length = ParsingPrimitivesClassic.ParseLength(ref buffer, ref state);
+            int length = ParsingPrimitives.ParseLength(ref buffer, ref state);
             if (length == 0)
             {
                 return 0L;
@@ -285,7 +285,7 @@ namespace Google.Protobuf
             {
                 if (RefillBufferHelper.ParseTag(ref buffer, ref state) == expectedTag)
                 {
-                    result = ParsingPrimitivesClassic.ParseRawVarint64(ref buffer, ref state);
+                    result = ParsingPrimitives.ParseRawVarint64(ref buffer, ref state);
                 }
                 else
                 {
