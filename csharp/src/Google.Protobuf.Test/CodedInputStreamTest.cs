@@ -396,80 +396,80 @@ namespace Google.Protobuf
 
         protected override void AssertReadVarint(byte[] data, ulong value)
         {
-            // CodedInputStream input = new CodedInputStream(data);
-            // Assert.AreEqual((uint)value, input.ReadRawVarint32());
+            CodedInputStream input = new CodedInputStream(data);
+            Assert.AreEqual((uint)value, input.ReadRawVarint32());
 
-            // input = new CodedInputStream(data);
-            // Assert.AreEqual(value, input.ReadRawVarint64());
-            // Assert.IsTrue(input.IsAtEnd);
+            input = new CodedInputStream(data);
+            Assert.AreEqual(value, input.ReadRawVarint64());
+            Assert.IsTrue(input.IsAtEnd);
 
-            // // Try different block sizes.
-            // for (int bufferSize = 1; bufferSize <= 16; bufferSize *= 2)
-            // {
-            //     input = new CodedInputStream(new SmallBlockInputStream(data, bufferSize));
-            //     Assert.AreEqual((uint)value, input.ReadRawVarint32());
+            // Try different block sizes.
+            for (int bufferSize = 1; bufferSize <= 16; bufferSize *= 2)
+            {
+                input = new CodedInputStream(new SmallBlockInputStream(data, bufferSize));
+                Assert.AreEqual((uint)value, input.ReadRawVarint32());
 
-            //     input = new CodedInputStream(new SmallBlockInputStream(data, bufferSize));
-            //     Assert.AreEqual(value, input.ReadRawVarint64());
-            //     Assert.IsTrue(input.IsAtEnd);
-            // }
+                input = new CodedInputStream(new SmallBlockInputStream(data, bufferSize));
+                Assert.AreEqual(value, input.ReadRawVarint64());
+                Assert.IsTrue(input.IsAtEnd);
+            }
 
-            // // Try reading directly from a MemoryStream. We want to verify that it
-            // // doesn't read past the end of the input, so write an extra byte - this
-            // // lets us test the position at the end.
-            // MemoryStream memoryStream = new MemoryStream();
-            // memoryStream.Write(data, 0, data.Length);
-            // memoryStream.WriteByte(0);
-            // memoryStream.Position = 0;
-            // Assert.AreEqual((uint)value, CodedInputStream.ReadRawVarint32(memoryStream));
-            // Assert.AreEqual(data.Length, memoryStream.Position);
+            // Try reading directly from a MemoryStream. We want to verify that it
+            // doesn't read past the end of the input, so write an extra byte - this
+            // lets us test the position at the end.
+            MemoryStream memoryStream = new MemoryStream();
+            memoryStream.Write(data, 0, data.Length);
+            memoryStream.WriteByte(0);
+            memoryStream.Position = 0;
+            Assert.AreEqual((uint)value, CodedInputStream.ReadRawVarint32(memoryStream));
+            Assert.AreEqual(data.Length, memoryStream.Position);
         }
 
         protected override void AssertReadVarintFailure(InvalidProtocolBufferException expected, byte[] data)
         {
-            // CodedInputStream input = new CodedInputStream(data);
-            // var exception = Assert.Throws<InvalidProtocolBufferException>(() => input.ReadRawVarint32());
-            // Assert.AreEqual(expected.Message, exception.Message);
+            CodedInputStream input = new CodedInputStream(data);
+            var exception = Assert.Throws<InvalidProtocolBufferException>(() => input.ReadRawVarint32());
+            Assert.AreEqual(expected.Message, exception.Message);
 
-            // input = new CodedInputStream(data);
-            // exception = Assert.Throws<InvalidProtocolBufferException>(() => input.ReadRawVarint64());
-            // Assert.AreEqual(expected.Message, exception.Message);
+            input = new CodedInputStream(data);
+            exception = Assert.Throws<InvalidProtocolBufferException>(() => input.ReadRawVarint64());
+            Assert.AreEqual(expected.Message, exception.Message);
 
-            // // Make sure we get the same error when reading directly from a Stream.
-            // exception = Assert.Throws<InvalidProtocolBufferException>(() => CodedInputStream.ReadRawVarint32(new MemoryStream(data)));
-            // Assert.AreEqual(expected.Message, exception.Message);
+            // Make sure we get the same error when reading directly from a Stream.
+            exception = Assert.Throws<InvalidProtocolBufferException>(() => CodedInputStream.ReadRawVarint32(new MemoryStream(data)));
+            Assert.AreEqual(expected.Message, exception.Message);
         }
 
         protected override void AssertReadLittleEndian32(byte[] data, uint value)
         {
-            // CodedInputStream input = new CodedInputStream(data);
-            // Assert.AreEqual(value, input.ReadRawLittleEndian32());
-            // Assert.IsTrue(input.IsAtEnd);
+            CodedInputStream input = new CodedInputStream(data);
+            Assert.AreEqual(value, input.ReadRawLittleEndian32());
+            Assert.IsTrue(input.IsAtEnd);
 
-            // // Try different block sizes.
-            // for (int blockSize = 1; blockSize <= 16; blockSize *= 2)
-            // {
-            //     input = new CodedInputStream(
-            //         new SmallBlockInputStream(data, blockSize));
-            //     Assert.AreEqual(value, input.ReadRawLittleEndian32());
-            //     Assert.IsTrue(input.IsAtEnd);
-            // }
+            // Try different block sizes.
+            for (int blockSize = 1; blockSize <= 16; blockSize *= 2)
+            {
+                input = new CodedInputStream(
+                    new SmallBlockInputStream(data, blockSize));
+                Assert.AreEqual(value, input.ReadRawLittleEndian32());
+                Assert.IsTrue(input.IsAtEnd);
+            }
         }
 
         protected override void AssertReadLittleEndian64(byte[] data, ulong value)
         {
-            // CodedInputStream input = new CodedInputStream(data);
-            // Assert.AreEqual(value, input.ReadRawLittleEndian64());
-            // Assert.IsTrue(input.IsAtEnd);
+            CodedInputStream input = new CodedInputStream(data);
+            Assert.AreEqual(value, input.ReadRawLittleEndian64());
+            Assert.IsTrue(input.IsAtEnd);
 
-            // // Try different block sizes.
-            // for (int blockSize = 1; blockSize <= 16; blockSize *= 2)
-            // {
-            //     input = new CodedInputStream(
-            //         new SmallBlockInputStream(data, blockSize));
-            //     Assert.AreEqual(value, input.ReadRawLittleEndian64());
-            //     Assert.IsTrue(input.IsAtEnd);
-            // }
+            // Try different block sizes.
+            for (int blockSize = 1; blockSize <= 16; blockSize *= 2)
+            {
+                input = new CodedInputStream(
+                    new SmallBlockInputStream(data, blockSize));
+                Assert.AreEqual(value, input.ReadRawLittleEndian64());
+                Assert.IsTrue(input.IsAtEnd);
+            }
         }
 
         protected override void AssertEnum(byte[] data, int value)
