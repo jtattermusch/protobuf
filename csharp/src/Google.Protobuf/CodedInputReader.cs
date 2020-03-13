@@ -94,7 +94,7 @@ namespace Google.Protobuf
             this.state.sizeLimit = DefaultSizeLimit;
             this.state.recursionLimit = recursionLimit;
             this.state.currentLimit = int.MaxValue;
-            this.state.refillBufferHelper = new RefillBufferHelper(input, ref this.buffer);
+            this.state.segmentedBufferHelper = new SegmentedBufferHelper(input, out this.buffer);
             this.state.bufferPos = 0;
             this.state.bufferSize = this.buffer.Length;
             this.state.codedInputStream = null;
@@ -129,7 +129,7 @@ namespace Google.Protobuf
         public bool IsAtEnd
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get {  return RefillBufferHelper.IsAtEnd(ref buffer, ref state); }
+            get {  return SegmentedBufferHelper.IsAtEnd(ref buffer, ref state); }
         }
 
         /// <summary>
@@ -212,7 +212,7 @@ namespace Google.Protobuf
 
         public uint ReadTag()
         {
-            return RefillBufferHelper.ParseTag(ref buffer, ref state);
+            return ParsingPrimitives.ParseTag(ref buffer, ref state);
         }
 
         /// <summary>
@@ -230,7 +230,7 @@ namespace Google.Protobuf
         /// <exception cref="InvalidOperationException">The last read operation read to the end of the logical input</exception>
         public void SkipLastField()
         {
-            RefillBufferHelper.SkipLastField(ref buffer, ref state);
+            ParsingPrimitivesMessages.SkipLastField(ref buffer, ref state);
         }
 
         private void SkipRawBytes(int length)
@@ -244,7 +244,7 @@ namespace Google.Protobuf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void SkipGroup(uint startGroupTag)
         {
-            RefillBufferHelper.SkipGroup(ref buffer, ref state, startGroupTag);
+            ParsingPrimitivesMessages.SkipGroup(ref buffer, ref state, startGroupTag);
         }
 
         /// <summary>
@@ -421,7 +421,7 @@ namespace Google.Protobuf
         public void ReadMessage(IMessage message)
         {
             // TODO: add a fallback if IMessage does not implement IBufferMessage 
-            RefillBufferHelper.ReadMessage(ref this, message);
+            ParsingPrimitivesMessages.ReadMessage(ref this, message);
         }
 
         /// <summary>
@@ -430,7 +430,7 @@ namespace Google.Protobuf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ReadGroup(IMessage message)
         {
-            RefillBufferHelper.ReadGroup(ref this, message);
+            ParsingPrimitivesMessages.ReadGroup(ref this, message);
         }
 
         /// <summary>
@@ -656,7 +656,7 @@ namespace Google.Protobuf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal int PushLimit(int byteLimit)
         {
-            return RefillBufferHelper.PushLimit(ref state, byteLimit);
+            return SegmentedBufferHelper.PushLimit(ref state, byteLimit);
         }
 
         /// <summary>
@@ -665,7 +665,7 @@ namespace Google.Protobuf
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void PopLimit(int oldLimit)
         {
-            RefillBufferHelper.PopLimit(ref state, oldLimit);
+            SegmentedBufferHelper.PopLimit(ref state, oldLimit);
         }
 
         /// <summary>
@@ -677,7 +677,7 @@ namespace Google.Protobuf
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                return RefillBufferHelper.IsReachedLimit(ref state);
+                return SegmentedBufferHelper.IsReachedLimit(ref state);
             }
         }
 
