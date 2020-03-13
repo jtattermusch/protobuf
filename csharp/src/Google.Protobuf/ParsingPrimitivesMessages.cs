@@ -132,6 +132,28 @@ namespace Google.Protobuf
             SegmentedBufferHelper.PopLimit(ref ctx.state, oldLimit);
         }
 
+        public static void ReadMessage(ref ParseContext ctx, IMessage message)
+        {
+            int length = ParsingPrimitives.ParseLength(ref ctx.buffer, ref ctx.state);
+            if (ctx.state.recursionDepth >= ctx.state.recursionLimit)
+            {
+                throw InvalidProtocolBufferException.RecursionLimitExceeded();
+            }
+            int oldLimit = SegmentedBufferHelper.PushLimit(ref ctx.state, length);
+            ++ctx.state.recursionDepth;
+
+            ReadRawMessage(ref ctx, message);
+
+            CheckReadEndOfStreamTag(ref ctx.state);
+            // Check that we've read exactly as much data as expected.
+            if (!SegmentedBufferHelper.IsReachedLimit(ref ctx.state))
+            {
+                throw InvalidProtocolBufferException.TruncatedMessage();
+            }
+            --ctx.state.recursionDepth;
+            SegmentedBufferHelper.PopLimit(ref ctx.state, oldLimit);
+        }
+
         public static void ReadGroup(ref CodedInputReader ctx, IMessage message)
         {
             if (ctx.state.recursionDepth >= ctx.state.recursionLimit)
@@ -145,7 +167,38 @@ namespace Google.Protobuf
             --ctx.state.recursionDepth;
         }
 
+        public static void ReadGroup(ref ParseContext ctx, IMessage message)
+        {
+            if (ctx.state.recursionDepth >= ctx.state.recursionLimit)
+            {
+                throw InvalidProtocolBufferException.RecursionLimitExceeded();
+            }
+            ++ctx.state.recursionDepth;
+            
+            ReadRawMessage(ref ctx, message);
+
+            --ctx.state.recursionDepth;
+        }
+
         public static void ReadRawMessage(ref CodedInputReader ctx, IMessage message)
+        {
+            if (message is IBufferMessage)
+            {
+                var bufferMessage = message as IBufferMessage;
+                bufferMessage.MergeFrom(ref ctx);
+            }
+            else
+            {
+                if (ctx.state.codedInputStream == null)
+                {
+                    // TODO: improve the msg
+                    throw new InvalidProtocolBufferException("Cannot parse message with current parse context. Do you need to regenerate the code?");
+                }
+                message.MergeFrom(ctx.state.codedInputStream);
+            }
+        }
+
+        public static void ReadRawMessage(ref ParseContext ctx, IMessage message)
         {
             if (message is IBufferMessage)
             {

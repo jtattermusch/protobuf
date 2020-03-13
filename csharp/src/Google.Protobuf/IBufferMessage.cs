@@ -48,6 +48,12 @@ namespace Google.Protobuf
         void MergeFrom(ref CodedInputReader input);
 
         /// <summary>
+        /// Internal implementation of merging data from given parse context into this message.
+        /// Users should never invoke this method directly.
+        /// </summary>        
+        void MergeFrom_Internal(ref ParseContext ctx);
+
+        /// <summary>
         /// Writes the data to the given <see cref="CodedOutputWriter"/>.
         /// </summary>
         /// <param name="output"><see cref="CodedOutputWriter"/> to write the data to. Must not be null.</param>
