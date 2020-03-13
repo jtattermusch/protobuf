@@ -87,13 +87,13 @@ namespace Google.Protobuf
             do
             {
                 // field=1, type=32-bit = tag of 13
-                if (RefillBufferHelper.ParseTag(ref buffer, ref state) == 13)
+                if (ParsingPrimitives.ParseTag(ref buffer, ref state) == 13)
                 {
                     result = ParsingPrimitives.ParseFloat(ref buffer, ref state);
                 }
                 else
                 {
-                    RefillBufferHelper.SkipLastField(ref buffer, ref state);
+                    ParsingPrimitivesMessages.SkipLastField(ref buffer, ref state);
                 }
             }
             while (state.totalBytesRetired + state.bufferPos < finalBufferPos);
@@ -139,13 +139,13 @@ namespace Google.Protobuf
             do
             {
                 // field=1, type=64-bit = tag of 9
-                if (RefillBufferHelper.ParseTag(ref buffer, ref state) == 9)
+                if (ParsingPrimitives.ParseTag(ref buffer, ref state) == 9)
                 {
                     result = ParsingPrimitives.ParseDouble(ref buffer, ref state);
                 }
                 else
                 {
-                    RefillBufferHelper.SkipLastField(ref buffer, ref state);
+                    ParsingPrimitivesMessages.SkipLastField(ref buffer, ref state);
                 }
             }
             while (state.totalBytesRetired + state.bufferPos < finalBufferPos);
@@ -209,13 +209,13 @@ namespace Google.Protobuf
             do
             {
                 // field=1, type=varint = tag of 8
-                if (RefillBufferHelper.ParseTag(ref buffer, ref state) == 8)
+                if (ParsingPrimitives.ParseTag(ref buffer, ref state) == 8)
                 {
                     result = ParsingPrimitives.ParseRawVarint32(ref buffer, ref state);
                 }
                 else
                 {
-                    RefillBufferHelper.SkipLastField(ref buffer, ref state);
+                    ParsingPrimitivesMessages.SkipLastField(ref buffer, ref state);
                 }
             }
             while (state.totalBytesRetired + state.bufferPos < finalBufferPos);
@@ -281,13 +281,13 @@ namespace Google.Protobuf
             ulong result = 0L;
             do
             {
-                if (RefillBufferHelper.ParseTag(ref buffer, ref state) == expectedTag)
+                if (ParsingPrimitives.ParseTag(ref buffer, ref state) == expectedTag)
                 {
                     result = ParsingPrimitives.ParseRawVarint64(ref buffer, ref state);
                 }
                 else
                 {
-                    RefillBufferHelper.SkipLastField(ref buffer, ref state);
+                    ParsingPrimitivesMessages.SkipLastField(ref buffer, ref state);
                 }
             }
             while (state.totalBytesRetired + state.bufferPos < finalBufferPos);

@@ -63,6 +63,65 @@ namespace Google.Protobuf
         }
 
         /// <summary>
+        /// Parses the next tag.
+        /// If the end of logical stream was reached, an invalid tag of 0 is returned. 
+        /// </summary>
+        public static uint ParseTag(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
+        {
+            // The "nextTag" logic is there only as an optimization for reading non-packed repeated / map
+            // fields and is strictly speaking not necessary.
+            // TODO(jtattermusch): look into simplifying the ParseTag logic.
+            if (state.hasNextTag)
+            {
+                state.lastTag = state.nextTag;
+                state.hasNextTag = false;
+                return state.lastTag;
+            }
+
+            // Optimize for the incredibly common case of having at least two bytes left in the buffer,
+            // and those two bytes being enough to get the tag. This will be true for fields up to 4095.
+            if (state.bufferPos + 2 <= state.bufferSize)
+            {
+                int tmp = buffer[state.bufferPos++];
+                if (tmp < 128)
+                {
+                    state.lastTag = (uint)tmp;
+                }
+                else
+                {
+                    int result = tmp & 0x7f;
+                    if ((tmp = buffer[state.bufferPos++]) < 128)
+                    {
+                        result |= tmp << 7;
+                        state.lastTag = (uint) result;
+                    }
+                    else
+                    {
+                        // Nope, rewind and go the potentially slow route.
+                        state.bufferPos -= 2;
+                        state.lastTag = ParsingPrimitives.ParseRawVarint32(ref buffer, ref state);
+                    }
+                }
+            }
+            else
+            {
+                if (SegmentedBufferHelper.IsAtEnd(ref buffer, ref state))
+                {
+                    state.lastTag = 0;
+                    return 0;
+                }
+
+                state.lastTag = ParsingPrimitives.ParseRawVarint32(ref buffer, ref state);
+            }
+            if (WireFormat.GetTagFieldNumber(state.lastTag) == 0)
+            {
+                // If we actually read a tag with a field of 0, that's not a valid tag.
+                throw InvalidProtocolBufferException.InvalidTag();
+            }
+            return state.lastTag;
+        }
+
+        /// <summary>
         /// Parses a raw varint.
         /// </summary>
         public static ulong ParseRawVarint64(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
@@ -355,7 +414,7 @@ namespace Google.Protobuf
                 state.bufferPos += size;
                 return bytes;
             }
-            else if (size < buffer.Length || size < state.refillBufferHelper.TotalLength)
+            else if (size < buffer.Length || size < state.segmentedBufferHelper.TotalLength)
             {
                 // Reading more bytes than are in the buffer, but not an excessive number
                 // of bytes.  We can safely allocate the resulting array ahead of time.
@@ -370,7 +429,7 @@ namespace Google.Protobuf
                 // We want to use RefillBuffer() and then copy from the buffer into our
                 // byte array rather than reading directly into our byte array because
                 // the input may be unbuffered.
-                state.refillBufferHelper.RefillBuffer(ref buffer, ref state, true);
+                state.segmentedBufferHelper.RefillBuffer(ref buffer, ref state, true);
 
                 while (size - pos > state.bufferSize)
                 {
@@ -378,7 +437,7 @@ namespace Google.Protobuf
                         .CopyTo(bytesSpan.Slice(pos, state.bufferSize));
                     pos += state.bufferSize;
                     state.bufferPos = state.bufferSize;
-                    state.refillBufferHelper.RefillBuffer(ref buffer, ref state, true);
+                    state.segmentedBufferHelper.RefillBuffer(ref buffer, ref state, true);
                 }
 
                 buffer.Slice(0, size - pos)
@@ -409,7 +468,7 @@ namespace Google.Protobuf
                 int sizeLeft = size - pos;
                 while (sizeLeft > 0)
                 {
-                    state.refillBufferHelper.RefillBuffer(ref buffer, ref state, true);
+                    state.segmentedBufferHelper.RefillBuffer(ref buffer, ref state, true);
                     byte[] chunk = new byte[Math.Min(sizeLeft, state.bufferSize)];
 
                     buffer.Slice(0, chunk.Length)
@@ -466,13 +525,13 @@ namespace Google.Protobuf
                 int pos = state.bufferSize - state.bufferPos;
                 state.bufferPos = state.bufferSize;
 
-                state.refillBufferHelper.RefillBuffer(ref buffer, ref state, true);
+                state.segmentedBufferHelper.RefillBuffer(ref buffer, ref state, true);
 
                 while (size - pos > state.bufferSize)
                 {
                     pos += state.bufferSize;
                     state.bufferPos = state.bufferSize;
-                    state.refillBufferHelper.RefillBuffer(ref buffer, ref state, true);
+                    state.segmentedBufferHelper.RefillBuffer(ref buffer, ref state, true);
                 }
 
                 state.bufferPos = size - pos;
@@ -538,7 +597,7 @@ namespace Google.Protobuf
         {
             if (state.bufferPos == state.bufferSize)
             {
-                state.refillBufferHelper.RefillBuffer(ref buffer, ref state, true);
+                state.segmentedBufferHelper.RefillBuffer(ref buffer, ref state, true);
             }
             return buffer[state.bufferPos++];
         }

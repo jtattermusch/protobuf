@@ -80,7 +80,7 @@ namespace Google.Protobuf
 
         internal int recursionDepth;  // current recursion depth
         
-        internal RefillBufferHelper refillBufferHelper;
+        internal SegmentedBufferHelper segmentedBufferHelper;
 
         // TODO: remember if this context is supposed to call MergeFrom(CodedInputStream cis) or MergeFrom(ref ParseContext ....) for submessages.
         // if non-null, the top level parse method was started with given cis as an argument

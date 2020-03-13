@@ -143,7 +143,7 @@ namespace Google.Protobuf
             this.state.bufferSize = bufferSize;
             this.state.sizeLimit = DefaultSizeLimit;
             this.state.recursionLimit = DefaultRecursionLimit;
-            this.state.refillBufferHelper = new RefillBufferHelper(input, buffer);
+            this.state.segmentedBufferHelper = new SegmentedBufferHelper(this);
             this.state.codedInputStream = this;
             this.leaveOpen = leaveOpen;
 
@@ -258,6 +258,10 @@ namespace Google.Protobuf
             set { state.ExtensionRegistry = value; }
         }
 
+        internal byte[] InternalBuffer => buffer;
+
+        internal Stream InternalInputStream => input;
+
         /// <summary>
         /// Disposes of this instance, potentially closing any underlying stream.
         /// </summary>
@@ -283,7 +287,7 @@ namespace Google.Protobuf
         /// tag read was not the one specified</exception>
         internal void CheckReadEndOfStreamTag()
         {
-            RefillBufferHelper.CheckReadEndOfStreamTag(ref state);
+            ParsingPrimitivesMessages.CheckReadEndOfStreamTag(ref state);
         }
         #endregion
 
@@ -320,7 +324,7 @@ namespace Google.Protobuf
         public uint ReadTag()
         {
             var span = new ReadOnlySpan<byte>(buffer);
-            return RefillBufferHelper.ParseTag(ref span, ref state);
+            return ParsingPrimitives.ParseTag(ref span, ref state);
         }
 
         /// <summary>
@@ -339,7 +343,7 @@ namespace Google.Protobuf
         public void SkipLastField()
         {
             var span = new ReadOnlySpan<byte>(buffer);
-            RefillBufferHelper.SkipLastField(ref span, ref state);
+            ParsingPrimitivesMessages.SkipLastField(ref span, ref state);
         }
 
         /// <summary>
@@ -348,7 +352,7 @@ namespace Google.Protobuf
         internal void SkipGroup(uint startGroupTag)
         {
             var span = new ReadOnlySpan<byte>(buffer);
-            RefillBufferHelper.SkipGroup(ref span, ref state, startGroupTag);
+            ParsingPrimitivesMessages.SkipGroup(ref span, ref state, startGroupTag);
         }
 
         /// <summary>
@@ -436,7 +440,7 @@ namespace Google.Protobuf
             var ctx = new CodedInputReader(ref span, ref state);
             try
             {
-                RefillBufferHelper.ReadMessage(ref ctx, builder);
+                ParsingPrimitivesMessages.ReadMessage(ref ctx, builder);
             }
             finally
             {
@@ -454,7 +458,7 @@ namespace Google.Protobuf
             var ctx = new CodedInputReader(ref span, ref state);
             try
             {
-                RefillBufferHelper.ReadGroup(ref ctx, builder);
+                ParsingPrimitivesMessages.ReadGroup(ref ctx, builder);
             }
             finally
             {
@@ -689,7 +693,7 @@ namespace Google.Protobuf
         /// <returns>The old limit.</returns>
         internal int PushLimit(int byteLimit)
         {
-            return RefillBufferHelper.PushLimit(ref state, byteLimit);
+            return SegmentedBufferHelper.PushLimit(ref state, byteLimit);
         }
 
         /// <summary>
@@ -697,7 +701,7 @@ namespace Google.Protobuf
         /// </summary>
         internal void PopLimit(int oldLimit)
         {
-            RefillBufferHelper.PopLimit(ref state, oldLimit);
+            SegmentedBufferHelper.PopLimit(ref state, oldLimit);
         }
 
         /// <summary>
@@ -708,7 +712,7 @@ namespace Google.Protobuf
         {
             get
             {
-                return RefillBufferHelper.IsReachedLimit(ref state);
+                return SegmentedBufferHelper.IsReachedLimit(ref state);
             }
         }
 
@@ -722,7 +726,7 @@ namespace Google.Protobuf
             get
             {
                 var span = new ReadOnlySpan<byte>(buffer);
-                return RefillBufferHelper.IsAtEnd(ref span, ref state);
+                return SegmentedBufferHelper.IsAtEnd(ref span, ref state);
             }
         }
 
@@ -738,7 +742,7 @@ namespace Google.Protobuf
         private bool RefillBuffer(bool mustSucceed)
         {
             var span = new ReadOnlySpan<byte>(buffer);
-            return state.refillBufferHelper.RefillBuffer(ref span, ref state, mustSucceed);
+            return state.segmentedBufferHelper.RefillBuffer(ref span, ref state, mustSucceed);
         }
 
         /// <summary>
@@ -764,7 +768,7 @@ namespace Google.Protobuf
             var ctx = new CodedInputReader(ref span, ref state);
             try
             {
-                RefillBufferHelper.ReadRawMessage(ref ctx, message);
+                ParsingPrimitivesMessages.ReadRawMessage(ref ctx, message);
             }
             finally
             {
