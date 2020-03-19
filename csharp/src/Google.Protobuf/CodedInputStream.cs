@@ -553,66 +553,6 @@ namespace Google.Protobuf
             return ParsingPrimitives.MaybeConsumeTag(ref span, ref state, tag);
         }
 
-        internal static float? ReadFloatWrapperLittleEndian(CodedInputStream input)
-        {
-            var span = new ReadOnlySpan<byte>(input.buffer);
-            return ParsingPrimitivesWrappers.ReadFloatWrapperLittleEndian(ref span, ref input.state);
-        }
-
-        internal static float? ReadFloatWrapperSlow(CodedInputStream input)
-        {
-            var span = new ReadOnlySpan<byte>(input.buffer);
-            return ParsingPrimitivesWrappers.ReadFloatWrapperSlow(ref span, ref input.state);
-        }
-
-        internal static double? ReadDoubleWrapperLittleEndian(CodedInputStream input)
-        {
-            var span = new ReadOnlySpan<byte>(input.buffer);
-            return ParsingPrimitivesWrappers.ReadDoubleWrapperLittleEndian(ref span, ref input.state);
-        }
-
-        internal static double? ReadDoubleWrapperSlow(CodedInputStream input)
-        {
-            var span = new ReadOnlySpan<byte>(input.buffer);
-            return ParsingPrimitivesWrappers.ReadDoubleWrapperSlow(ref span, ref input.state);
-        }
-
-        internal static bool? ReadBoolWrapper(CodedInputStream input)
-        {
-            var span = new ReadOnlySpan<byte>(input.buffer);
-            return ParsingPrimitivesWrappers.ReadBoolWrapper(ref span, ref input.state);
-        }
-
-        internal static uint? ReadUInt32Wrapper(CodedInputStream input)
-        {
-            var span = new ReadOnlySpan<byte>(input.buffer);
-            return ParsingPrimitivesWrappers.ReadUInt32Wrapper(ref span, ref input.state);
-        }
-
-        internal static int? ReadInt32Wrapper(CodedInputStream input)
-        {
-            var span = new ReadOnlySpan<byte>(input.buffer);
-            return ParsingPrimitivesWrappers.ReadInt32Wrapper(ref span, ref input.state);
-        }
-
-        internal static ulong? ReadUInt64Wrapper(CodedInputStream input)
-        {
-            var span = new ReadOnlySpan<byte>(input.buffer);
-            return ParsingPrimitivesWrappers.ReadUInt64Wrapper(ref span, ref input.state);
-        }
-
-        internal static ulong? ReadUInt64WrapperSlow(CodedInputStream input)
-        {
-            var span = new ReadOnlySpan<byte>(input.buffer);
-            return ParsingPrimitivesWrappers.ReadUInt64WrapperSlow(ref span, ref input.state);
-        }
-
-        internal static long? ReadInt64Wrapper(CodedInputStream input)
-        {
-            var span = new ReadOnlySpan<byte>(input.buffer);
-            return ParsingPrimitivesWrappers.ReadInt64Wrapper(ref span, ref input.state);
-        }
-
 #endregion
 
         #region Underlying reading primitives

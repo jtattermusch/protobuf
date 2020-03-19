@@ -769,17 +769,17 @@ namespace Google.Protobuf
             private static readonly Dictionary<System.Type, object> StreamReaders = new Dictionary<System.Type, object>
             {
                 // TODO: Provide more optimized readers.
-                { typeof(bool), (Func<CodedInputStream, bool?>)CodedInputStream.ReadBoolWrapper },
-                { typeof(int), (Func<CodedInputStream, int?>)CodedInputStream.ReadInt32Wrapper },
-                { typeof(long), (Func<CodedInputStream, long?>)CodedInputStream.ReadInt64Wrapper },
-                { typeof(uint), (Func<CodedInputStream, uint?>)CodedInputStream.ReadUInt32Wrapper },
-                { typeof(ulong), (Func<CodedInputStream, ulong?>)CodedInputStream.ReadUInt64Wrapper },
+                { typeof(bool), (ValueReader<bool?>)ParsingPrimitivesWrappers.ReadBoolWrapper },
+                { typeof(int), (ValueReader<int?>)ParsingPrimitivesWrappers.ReadInt32Wrapper },
+                { typeof(long), (ValueReader<long?>)ParsingPrimitivesWrappers.ReadInt64Wrapper },
+                { typeof(uint), (ValueReader<uint?>)ParsingPrimitivesWrappers.ReadUInt32Wrapper },
+                { typeof(ulong), (ValueReader<ulong?>)ParsingPrimitivesWrappers.ReadUInt64Wrapper },
                 { typeof(float), BitConverter.IsLittleEndian ?
-                    (Func<CodedInputStream, float?>)CodedInputStream.ReadFloatWrapperLittleEndian :
-                    (Func<CodedInputStream, float?>)CodedInputStream.ReadFloatWrapperSlow },
+                    (ValueReader<float?>)ParsingPrimitivesWrappers.ReadFloatWrapperLittleEndian :
+                    (ValueReader<float?>)ParsingPrimitivesWrappers.ReadFloatWrapperSlow },
                 { typeof(double), BitConverter.IsLittleEndian ?
-                    (Func<CodedInputStream, double?>)CodedInputStream.ReadDoubleWrapperLittleEndian :
-                    (Func<CodedInputStream, double?>)CodedInputStream.ReadDoubleWrapperSlow },
+                    (ValueReader<double?>)ParsingPrimitivesWrappers.ReadDoubleWrapperLittleEndian :
+                    (ValueReader<double?>)ParsingPrimitivesWrappers.ReadDoubleWrapperSlow },
                 // `string` and `ByteString` less performance-sensitive. Do not implement for now.
                 { typeof(string), null },
                 { typeof(ByteString), null },
@@ -822,20 +822,19 @@ namespace Google.Protobuf
 
             internal static ValueReader<T?> GetStreamReader<T>() where T : struct
             {
-                // TODO: optimize!!!
-                // object value;
-                // if (!StreamReaders.TryGetValue(typeof(T), out value))
-                // {
-                //     throw new InvalidOperationException("Invalid type argument requested for wrapper reader: " + typeof(T));
-                // }
-                // if (value == null)
-                // {
+                object value;
+                if (!StreamReaders.TryGetValue(typeof(T), out value))
+                {
+                    throw new InvalidOperationException("Invalid type argument requested for wrapper reader: " + typeof(T));
+                }
+                if (value == null)
+                {
                     // Return default unoptimized reader for the wrapper type.
                     var nestedCoded = GetCodec<T>();
                     return (ref ParseContext ctx) => Read<T>(ref ctx, nestedCoded);
-                //}
+                }
                 // Return optimized read for the wrapper type.
-                //return (ValueReader<T?>)value;
+                return (ValueReader<T?>)value;
             }
 
             internal static Func<CodedInputStream, T?> GetContextReader<T>() where T : struct

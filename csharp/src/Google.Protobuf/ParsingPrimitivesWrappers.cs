@@ -298,5 +298,55 @@ namespace Google.Protobuf
         {
             return (long?)ReadUInt64Wrapper(ref buffer, ref state);
         }
+
+        internal static float? ReadFloatWrapperLittleEndian(ref ParseContext ctx)
+        {
+            return ParsingPrimitivesWrappers.ReadFloatWrapperLittleEndian(ref ctx.buffer, ref ctx.state);
+        }
+
+        internal static float? ReadFloatWrapperSlow(ref ParseContext ctx)
+        {
+            return ParsingPrimitivesWrappers.ReadFloatWrapperSlow(ref ctx.buffer, ref ctx.state);
+        }
+
+        internal static double? ReadDoubleWrapperLittleEndian(ref ParseContext ctx)
+        {
+            return ParsingPrimitivesWrappers.ReadDoubleWrapperLittleEndian(ref ctx.buffer, ref ctx.state);
+        }
+
+        internal static double? ReadDoubleWrapperSlow(ref ParseContext ctx)
+        {
+            return ParsingPrimitivesWrappers.ReadDoubleWrapperSlow(ref ctx.buffer, ref ctx.state);
+        }
+
+        internal static bool? ReadBoolWrapper(ref ParseContext ctx)
+        {
+            return ParsingPrimitivesWrappers.ReadBoolWrapper(ref ctx.buffer, ref ctx.state);
+        }
+
+        internal static uint? ReadUInt32Wrapper(ref ParseContext ctx)
+        {
+            return ParsingPrimitivesWrappers.ReadUInt32Wrapper(ref ctx.buffer, ref ctx.state);
+        }
+
+        internal static int? ReadInt32Wrapper(ref ParseContext ctx)
+        {
+            return ParsingPrimitivesWrappers.ReadInt32Wrapper(ref ctx.buffer, ref ctx.state);
+        }
+
+        internal static ulong? ReadUInt64Wrapper(ref ParseContext ctx)
+        {
+            return ParsingPrimitivesWrappers.ReadUInt64Wrapper(ref ctx.buffer, ref ctx.state);
+        }
+
+        internal static ulong? ReadUInt64WrapperSlow(ref ParseContext ctx)
+        {
+            return ParsingPrimitivesWrappers.ReadUInt64WrapperSlow(ref ctx.buffer, ref ctx.state);
+        }
+
+        internal static long? ReadInt64Wrapper(ref ParseContext ctx)
+        {
+            return ParsingPrimitivesWrappers.ReadInt64Wrapper(ref ctx.buffer, ref ctx.state);
+        }
     }
 }

@@ -58,7 +58,6 @@ namespace Google.Protobuf
         internal ParseContext(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
         {
             this.buffer = buffer;
-            // TODO: ideally we would use a reference to the original state, but that doesn't seem possible
             this.state = state;
         }
 
@@ -70,6 +69,7 @@ namespace Google.Protobuf
         internal ParseContext(CodedInputStream input)
         {
             this.buffer = new ReadOnlySpan<byte>(input.InternalBuffer);
+            // TODO: ideally we would use a reference to the original state, but that doesn't seem possible
             this.state = input.InternalState;  // creates copy of the state
         }
 
