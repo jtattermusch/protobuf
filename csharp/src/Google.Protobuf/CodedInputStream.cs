@@ -262,6 +262,8 @@ namespace Google.Protobuf
 
         internal Stream InternalInputStream => input;
 
+        internal ref ParserInternalState InternalState => ref state;
+
         /// <summary>
         /// Disposes of this instance, potentially closing any underlying stream.
         /// </summary>
@@ -300,16 +302,8 @@ namespace Google.Protobuf
         /// </summary>
         public uint PeekTag()
         {
-            if (state.hasNextTag)
-            {
-                return state.nextTag;
-            }
-
-            uint savedLast = state.lastTag;
-            state.nextTag = ReadTag();
-            state.hasNextTag = true;
-            state.lastTag = savedLast; // Undo the side effect of ReadTag
-            return state.nextTag;
+            var span = new ReadOnlySpan<byte>(buffer);
+            return ParsingPrimitives.PeekTag(ref span, ref state);
         }
 
         /// <summary>
@@ -455,7 +449,7 @@ namespace Google.Protobuf
         public void ReadGroup(IMessage builder)
         {
             var span = new ReadOnlySpan<byte>(buffer);
-            var ctx = new CodedInputReader(ref span, ref state);
+            var ctx = new ParseContext(ref span, ref state);
             try
             {
                 ParsingPrimitivesMessages.ReadGroup(ref ctx, builder);
@@ -557,12 +551,8 @@ namespace Google.Protobuf
         /// </summary>
         public bool MaybeConsumeTag(uint tag)
         {
-            if (PeekTag() == tag)
-            {
-                state.hasNextTag = false;
-                return true;
-            }
-            return false;
+            var span = new ReadOnlySpan<byte>(buffer);
+            return ParsingPrimitives.MaybeConsumeTag(ref span, ref state, tag);
         }
 
         internal static float? ReadFloatWrapperLittleEndian(CodedInputStream input)
@@ -765,7 +755,7 @@ namespace Google.Protobuf
         public void ReadRawMessage(IMessage message)
         {
             var span = new ReadOnlySpan<byte>(buffer);
-            var ctx = new CodedInputReader(ref span, ref state);
+            var ctx = new ParseContext(ref span, ref state);
             try
             {
                 ParsingPrimitivesMessages.ReadRawMessage(ref ctx, message);

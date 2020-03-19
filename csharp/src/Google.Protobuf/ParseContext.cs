@@ -55,6 +55,13 @@ namespace Google.Protobuf
         internal ReadOnlySpan<byte> buffer;
         internal ParserInternalState state;
 
+        internal ParseContext(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
+        {
+            this.buffer = buffer;
+            // TODO: ideally we would use a reference to the original state, but that doesn't seem possible
+            this.state = state;
+        }
+
         /// <summary>
         /// Returns the last tag read, or 0 if no tags have been read or we've read beyond
         /// the end of the input.

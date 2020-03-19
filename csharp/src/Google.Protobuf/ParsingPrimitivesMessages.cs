@@ -203,7 +203,7 @@ namespace Google.Protobuf
             if (message is IBufferMessage)
             {
                 var bufferMessage = message as IBufferMessage;
-                bufferMessage.MergeFrom(ref ctx);
+                bufferMessage.MergeFrom_Internal(ref ctx);   
             }
             else
             {

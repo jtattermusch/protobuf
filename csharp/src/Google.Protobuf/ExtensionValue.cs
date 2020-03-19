@@ -39,6 +39,7 @@ namespace Google.Protobuf
     internal interface IExtensionValue : IEquatable<IExtensionValue>, IDeepCloneable<IExtensionValue>
     {
         void MergeFrom(CodedInputStream input);
+        void MergeFrom(ref ParseContext input);
 #if GOOGLE_PROTOBUF_SUPPORT_SYSTEM_MEMORY
         void MergeFrom(ref CodedInputReader input);
 #endif
@@ -99,7 +100,23 @@ namespace Google.Protobuf
 
         public void MergeFrom(CodedInputStream input)
         {
-            codec.ValueMerger(input, ref field);
+            // NOTE: emulate the the method functionality for backwards compatibility
+            var span = new ReadOnlySpan<byte>(input.InternalBuffer);
+            var ctx = new ParseContext(ref span, ref input.InternalState);
+            try
+            {
+                codec.ValueMerger(ref ctx, ref field);
+            }
+            finally
+            {
+                // store the state
+                input.InternalState = ctx.state;
+            }
+        }
+
+        public void MergeFrom(ref ParseContext ctx)
+        {
+            codec.ValueMerger(ref ctx, ref field);
         }
 
 #if GOOGLE_PROTOBUF_SUPPORT_SYSTEM_MEMORY
@@ -208,6 +225,11 @@ namespace Google.Protobuf
         public void MergeFrom(CodedInputStream input)
         {
             field.AddEntriesFrom(input, codec);
+        }
+
+        public void MergeFrom(ref ParseContext ctx)
+        {
+            field.AddEntriesFrom(ref ctx, codec);
         }
 
 #if GOOGLE_PROTOBUF_SUPPORT_SYSTEM_MEMORY

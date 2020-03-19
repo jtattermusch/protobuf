@@ -246,6 +246,63 @@ namespace Google.Protobuf
             }
         }
 
+        /// <summary>
+        /// Parse a single field from <paramref name="input"/> and merge it
+        /// into this set.
+        /// </summary>
+        /// <param name="input">The coded input reader containing the field</param>
+        /// <returns>false if the tag is an "end group" tag, true otherwise</returns>
+        private bool MergeFieldFrom(ref ParseContext ctx)
+        {
+            // TODO: deduplicate MergeFieldFrom implementations
+            uint tag = ctx.LastTag;
+            int number = WireFormat.GetTagFieldNumber(tag);
+            switch (WireFormat.GetTagWireType(tag))
+            {
+                case WireFormat.WireType.Varint:
+                    {
+                        ulong uint64 = ctx.ReadUInt64();
+                        GetOrAddField(number).AddVarint(uint64);
+                        return true;
+                    }
+                case WireFormat.WireType.Fixed32:
+                    {
+                        uint uint32 = ctx.ReadFixed32();
+                        GetOrAddField(number).AddFixed32(uint32);
+                        return true;
+                    }
+                case WireFormat.WireType.Fixed64:
+                    {
+                        ulong uint64 = ctx.ReadFixed64();
+                        GetOrAddField(number).AddFixed64(uint64);
+                        return true;
+                    }
+                case WireFormat.WireType.LengthDelimited:
+                    {
+                        ByteString bytes = ctx.ReadBytes();
+                        GetOrAddField(number).AddLengthDelimited(bytes);
+                        return true;
+                    }
+                case WireFormat.WireType.StartGroup:
+                    {
+                        uint endTag = WireFormat.MakeTag(number, WireFormat.WireType.EndGroup);
+                        UnknownFieldSet set = new UnknownFieldSet();
+                        while (ctx.ReadTag() != endTag)
+                        {
+                            set.MergeFieldFrom(ref ctx);
+                        }
+                        GetOrAddField(number).AddGroup(set);
+                        return true;
+                    }
+                case WireFormat.WireType.EndGroup:
+                    {
+                        return false;
+                    }
+                default:
+                    throw InvalidProtocolBufferException.InvalidWireType();
+            }
+        }
+
 #if GOOGLE_PROTOBUF_SUPPORT_SYSTEM_MEMORY
         /// <summary>
         /// Parse a single field from <paramref name="input"/> and merge it
@@ -326,6 +383,35 @@ namespace Google.Protobuf
                 unknownFields = new UnknownFieldSet();
             }
             if (!unknownFields.MergeFieldFrom(input))
+            {
+                throw new InvalidProtocolBufferException("Merge an unknown field of end-group tag, indicating that the corresponding start-group was missing."); // match the old code-gen
+            }
+            return unknownFields;
+        }
+
+        /// <summary>
+        /// Create a new UnknownFieldSet if unknownFields is null.
+        /// Parse a single field from <paramref name="input"/> and merge it
+        /// into unknownFields. If <paramref name="input"/> is configured to discard unknown fields,
+        /// <paramref name="unknownFields"/> will be returned as-is and the field will be skipped.
+        /// </summary>
+        /// <param name="unknownFields">The UnknownFieldSet which need to be merged</param>
+        /// <param name="input">The coded input reader containing the field</param>
+        /// <returns>The merged UnknownFieldSet</returns>
+        public static UnknownFieldSet MergeFieldFrom(UnknownFieldSet unknownFields,
+                                                     ref ParseContext ctx)
+        {
+            // TODO: deduplicate MergeFieldFrom implementations
+            if (ctx.DiscardUnknownFields)
+            {
+                ParsingPrimitivesMessages.SkipLastField(ref ctx.buffer, ref ctx.state);
+                return unknownFields;
+            }
+            if (unknownFields == null)
+            {
+                unknownFields = new UnknownFieldSet();
+            }
+            if (!unknownFields.MergeFieldFrom(ref ctx))
             {
                 throw new InvalidProtocolBufferException("Merge an unknown field of end-group tag, indicating that the corresponding start-group was missing."); // match the old code-gen
             }

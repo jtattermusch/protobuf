@@ -206,6 +206,35 @@ namespace Google.Protobuf
             }
         }
 
+        /// <summary>
+        /// Tries to merge a field from the coded input, returning true if the field was merged.
+        /// If the set is null or the field was not otherwise merged, this returns false.
+        /// </summary>
+        public static bool TryMergeFieldFrom<TTarget>(ref ExtensionSet<TTarget> set, ref ParseContext ctx) where TTarget : IExtendableMessage<TTarget>
+        {
+            Extension extension;
+            int lastFieldNumber = WireFormat.GetTagFieldNumber(ctx.LastTag);
+
+            IExtensionValue extensionValue;
+            if (set != null && set.ValuesByNumber.TryGetValue(lastFieldNumber, out extensionValue))
+            {
+                extensionValue.MergeFrom(ref ctx);
+                return true;
+            }
+            else if (ctx.ExtensionRegistry != null && ctx.ExtensionRegistry.ContainsInputField(ctx.LastTag, typeof(TTarget), out extension))
+            {
+                IExtensionValue value = extension.CreateValue();
+                value.MergeFrom(ref ctx);
+                set = (set ?? new ExtensionSet<TTarget>());
+                set.ValuesByNumber.Add(extension.FieldNumber, value);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
 #if !GOOGLE_PROTOBUF_DISABLE_BUFFER_SERIALIZATION
         /// <summary>
         /// Tries to merge a field from the coded input, returning true if the field was merged.

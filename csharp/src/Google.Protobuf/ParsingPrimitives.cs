@@ -48,6 +48,7 @@ namespace Google.Protobuf
     /// </summary>
     internal static class ParsingPrimitives
     {
+
         /// <summary>
         /// Reads a length for length-delimited data.
         /// </summary>
@@ -119,6 +120,40 @@ namespace Google.Protobuf
                 throw InvalidProtocolBufferException.InvalidTag();
             }
             return state.lastTag;
+        }
+
+        /// <summary>
+        /// Peeks at the next tag in the stream. If it matches <paramref name="tag"/>,
+        /// the tag is consumed and the method returns <c>true</c>; otherwise, the
+        /// stream is left in the original position and the method returns <c>false</c>.
+        /// </summary>
+        public static bool MaybeConsumeTag(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state, uint tag)
+        {
+            if (PeekTag(ref buffer, ref state) == tag)
+            {
+                state.hasNextTag = false;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Peeks at the next field tag. This is like calling <see cref="ReadTag"/>, but the
+        /// tag is not consumed. (So a subsequent call to <see cref="ReadTag"/> will return the
+        /// same value.)
+        /// </summary>
+        public static uint PeekTag(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
+        {
+            if (state.hasNextTag)
+            {
+                return state.nextTag;
+            }
+
+            uint savedLast = state.lastTag;
+            state.nextTag = ParseTag(ref buffer, ref state);
+            state.hasNextTag = true;
+            state.lastTag = savedLast; // Undo the side effect of ReadTag
+            return state.nextTag;
         }
 
         /// <summary>
@@ -536,6 +571,22 @@ namespace Google.Protobuf
 
                 state.bufferPos = size - pos;
             }
+        }
+
+        public static string ReadString(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
+        {
+            int length = ParsingPrimitives.ParseLength(ref buffer, ref state);
+            return ParsingPrimitives.ReadRawString(ref buffer, ref state, length);
+        }
+
+        /// <summary>
+        /// Reads a bytes field value from the input.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ByteString ReadBytes(ref ReadOnlySpan<byte> buffer, ref ParserInternalState state)
+        {
+            int length = ParsingPrimitives.ParseLength(ref buffer, ref state);
+            return ByteString.AttachBytes(ParsingPrimitives.ReadRawBytes(ref buffer, ref state, length));
         }
 
         /// <summary>
