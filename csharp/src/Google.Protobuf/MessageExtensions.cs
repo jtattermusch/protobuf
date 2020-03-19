@@ -241,25 +241,37 @@ namespace Google.Protobuf
             input.CheckReadEndOfStreamTag();
         }
 
-#if GOOGLE_PROTOBUF_SUPPORT_SYSTEM_MEMORY
         [SecuritySafeCritical]
         internal static void MergeFrom(this IMessage message, ReadOnlySequence<byte> data, bool discardUnknownFields, ExtensionRegistry registry)
         {
             ProtoPreconditions.CheckNotNull(message, "message");
 
-            if (message is IBufferMessage bufferMessage)
-            {
-                CodedInputReader input = new CodedInputReader(data);
-                input.DiscardUnknownFields = discardUnknownFields;
-                input.ExtensionRegistry = registry;
-                bufferMessage.MergeFrom(ref input);
-                input.CheckReadEndOfInputTag();
-            }
-            else
-            {
-                message.MergeFrom(data.ToArray(), discardUnknownFields, registry);
-            }
+            var ctx = new ParseContext(data);
+            ctx.DiscardUnknownFields = discardUnknownFields;
+            ctx.ExtensionRegistry = registry;
+            ParsingPrimitivesMessages.ReadRawMessage(ref ctx, message);
+            ParsingPrimitivesMessages.CheckReadEndOfStreamTag(ref ctx.state);
         }
+
+#if GOOGLE_PROTOBUF_SUPPORT_SYSTEM_MEMORY
+        // [SecuritySafeCritical]
+        // internal static void MergeFrom(this IMessage message, ReadOnlySequence<byte> data, bool discardUnknownFields, ExtensionRegistry registry)
+        // {
+        //     ProtoPreconditions.CheckNotNull(message, "message");
+
+        //     if (message is IBufferMessage bufferMessage)
+        //     {
+        //         CodedInputReader input = new CodedInputReader(data);
+        //         input.DiscardUnknownFields = discardUnknownFields;
+        //         input.ExtensionRegistry = registry;
+        //         bufferMessage.MergeFrom(ref input);
+        //         input.CheckReadEndOfInputTag();
+        //     }
+        //     else
+        //     {
+        //         message.MergeFrom(data.ToArray(), discardUnknownFields, registry);
+        //     }
+        // }
 #endif
 
         internal static void MergeFrom(this IMessage message, Stream input, bool discardUnknownFields, ExtensionRegistry registry)

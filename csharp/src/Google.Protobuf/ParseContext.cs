@@ -52,6 +52,9 @@ namespace Google.Protobuf
     [SecuritySafeCritical]
     public ref struct ParseContext
     {
+        internal const int DefaultRecursionLimit = 100;
+        internal const int DefaultSizeLimit = Int32.MaxValue;
+
         internal ReadOnlySpan<byte> buffer;
         internal ParserInternalState state;
 
@@ -71,6 +74,28 @@ namespace Google.Protobuf
             this.buffer = new ReadOnlySpan<byte>(input.InternalBuffer);
             // TODO: ideally we would use a reference to the original state, but that doesn't seem possible
             this.state = input.InternalState;  // creates copy of the state
+        }
+
+        internal ParseContext(ReadOnlySequence<byte> input) : this(input, DefaultRecursionLimit)
+        {
+        }
+
+        internal ParseContext(ReadOnlySequence<byte> input, int recursionLimit)
+        {
+            this.buffer = default;
+            this.state = default;
+            this.state.lastTag = 0;
+            this.state.recursionDepth = 0;
+            this.state.sizeLimit = DefaultSizeLimit;
+            this.state.recursionLimit = recursionLimit;
+            this.state.currentLimit = int.MaxValue;
+            this.state.segmentedBufferHelper = new SegmentedBufferHelper(input, out this.buffer);
+            this.state.bufferPos = 0;
+            this.state.bufferSize = this.buffer.Length;
+            this.state.codedInputStream = null;
+
+            this.state.DiscardUnknownFields = false;
+            this.state.ExtensionRegistry = null;
         }
 
         /// <summary>

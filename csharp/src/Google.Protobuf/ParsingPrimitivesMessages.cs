@@ -182,9 +182,8 @@ namespace Google.Protobuf
 
         public static void ReadRawMessage(ref CodedInputReader ctx, IMessage message)
         {
-            if (message is IBufferMessage)
+            if (message is IBufferMessage bufferMessage)
             {
-                var bufferMessage = message as IBufferMessage;
                 bufferMessage.MergeFrom(ref ctx);
             }
             else
@@ -200,9 +199,8 @@ namespace Google.Protobuf
 
         public static void ReadRawMessage(ref ParseContext ctx, IMessage message)
         {
-            if (message is IBufferMessage)
+            if (message is IBufferMessage bufferMessage)
             {
-                var bufferMessage = message as IBufferMessage;
                 bufferMessage.MergeFrom_Internal(ref ctx);   
             }
             else
