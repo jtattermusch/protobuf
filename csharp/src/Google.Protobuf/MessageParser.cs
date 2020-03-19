@@ -369,7 +369,6 @@ namespace Google.Protobuf
             return message;
         }
 
-#if GOOGLE_PROTOBUF_SUPPORT_SYSTEM_MEMORY
         /// <summary>
         /// Parses a message from the given sequence.
         /// </summary>
@@ -383,6 +382,7 @@ namespace Google.Protobuf
             return message;
         }
 
+#if GOOGLE_PROTOBUF_SUPPORT_SYSTEM_MEMORY
         /// <summary>
         /// Parses a message from the given coded input stream.
         /// </summary>
