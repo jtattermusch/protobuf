@@ -448,16 +448,14 @@ namespace Google.Protobuf
         /// </summary>
         public void ReadGroup(IMessage builder)
         {
-            var span = new ReadOnlySpan<byte>(buffer);
-            var ctx = new ParseContext(ref span, ref state);
+            var ctx = new ParseContext(this);
             try
             {
                 ParsingPrimitivesMessages.ReadGroup(ref ctx, builder);
             }
             finally
             {
-                // store the state
-                state = ctx.state;
+                ctx.CopyStateTo(this);
             }
         }
 
@@ -754,16 +752,14 @@ namespace Google.Protobuf
         /// </summary>
         public void ReadRawMessage(IMessage message)
         {
-            var span = new ReadOnlySpan<byte>(buffer);
-            var ctx = new ParseContext(ref span, ref state);
+            var ctx = new ParseContext(this);
             try
             {
                 ParsingPrimitivesMessages.ReadRawMessage(ref ctx, message);
             }
             finally
             {
-                // store the state
-                state = ctx.state;
+                ctx.CopyStateTo(this);
             }
         }
 #endregion

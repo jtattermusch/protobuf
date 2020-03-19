@@ -63,6 +63,17 @@ namespace Google.Protobuf
         }
 
         /// <summary>
+        /// Creates a ParseContext instance from CodedInputStream.
+        /// WARNING: internally this copies the CodedInputStream's state, so after done with the ParseContext,
+        /// the CodedInputStream's state needs to be updated.
+        /// </summary>
+        internal ParseContext(CodedInputStream input)
+        {
+            this.buffer = new ReadOnlySpan<byte>(input.InternalBuffer);
+            this.state = input.InternalState;  // creates copy of the state
+        }
+
+        /// <summary>
         /// Returns the last tag read, or 0 if no tags have been read or we've read beyond
         /// the end of the input.
         /// </summary>
@@ -276,6 +287,11 @@ namespace Google.Protobuf
         public int ReadLength()
         {
             return (int)ParsingPrimitives.ParseRawVarint32(ref buffer, ref state);
+        }
+
+        internal void CopyStateTo(CodedInputStream input)
+        {
+            input.InternalState = state;
         }
     }
 }

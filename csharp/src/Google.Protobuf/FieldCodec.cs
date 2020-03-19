@@ -1269,17 +1269,14 @@ namespace Google.Protobuf
         /// <returns>The value read from the stream.</returns>
         public T Read(CodedInputStream input)
         {
-            // NOTE: emulate the the methods for backwards compatibility
-            var span = new ReadOnlySpan<byte>(input.InternalBuffer);
-            var ctx = new ParseContext(ref span, ref input.InternalState);
+            var ctx = new ParseContext(input);
             try
             {
-                return Read(ref ctx);
+                return ValueReader(ref ctx);
             }
             finally
             {
-                // store the state
-                input.InternalState = ctx.state;
+                ctx.CopyStateTo(input);
             }
         }
 

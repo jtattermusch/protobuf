@@ -100,17 +100,14 @@ namespace Google.Protobuf
 
         public void MergeFrom(CodedInputStream input)
         {
-            // NOTE: emulate the the method functionality for backwards compatibility
-            var span = new ReadOnlySpan<byte>(input.InternalBuffer);
-            var ctx = new ParseContext(ref span, ref input.InternalState);
+            var ctx = new ParseContext(input);
             try
             {
                 codec.ValueMerger(ref ctx, ref field);
             }
             finally
             {
-                // store the state
-                input.InternalState = ctx.state;
+                ctx.CopyStateTo(input);
             }
         }
 

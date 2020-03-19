@@ -95,17 +95,14 @@ namespace Google.Protobuf.Collections
         /// <param name="codec">The codec to use in order to read each entry.</param>
         public void AddEntriesFrom(CodedInputStream input, FieldCodec<T> codec)
         {
-            // NOTE: emulate the the method functionality for backwards compatibility
-            var span = new ReadOnlySpan<byte>(input.InternalBuffer);
-            var ctx = new ParseContext(ref span, ref input.InternalState);
+            var ctx = new ParseContext(input);
             try
             {
                 AddEntriesFrom(ref ctx, codec);
             }
             finally
             {
-                // store the state
-                input.InternalState = ctx.state;
+                ctx.CopyStateTo(input);
             }
         }
 
