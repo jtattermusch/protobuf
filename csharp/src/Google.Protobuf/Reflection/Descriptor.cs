@@ -313,14 +313,18 @@ namespace Google.Protobuf.Reflection {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
-            file_.AddEntriesFrom(input, _repeated_file_codec);
+            file_.AddEntriesFrom(ref input, _repeated_file_codec);
             break;
           }
         }
@@ -804,11 +808,15 @@ namespace Google.Protobuf.Reflection {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
             Name = input.ReadString();
@@ -819,23 +827,23 @@ namespace Google.Protobuf.Reflection {
             break;
           }
           case 26: {
-            dependency_.AddEntriesFrom(input, _repeated_dependency_codec);
+            dependency_.AddEntriesFrom(ref input, _repeated_dependency_codec);
             break;
           }
           case 34: {
-            messageType_.AddEntriesFrom(input, _repeated_messageType_codec);
+            messageType_.AddEntriesFrom(ref input, _repeated_messageType_codec);
             break;
           }
           case 42: {
-            enumType_.AddEntriesFrom(input, _repeated_enumType_codec);
+            enumType_.AddEntriesFrom(ref input, _repeated_enumType_codec);
             break;
           }
           case 50: {
-            service_.AddEntriesFrom(input, _repeated_service_codec);
+            service_.AddEntriesFrom(ref input, _repeated_service_codec);
             break;
           }
           case 58: {
-            extension_.AddEntriesFrom(input, _repeated_extension_codec);
+            extension_.AddEntriesFrom(ref input, _repeated_extension_codec);
             break;
           }
           case 66: {
@@ -854,12 +862,12 @@ namespace Google.Protobuf.Reflection {
           }
           case 82:
           case 80: {
-            publicDependency_.AddEntriesFrom(input, _repeated_publicDependency_codec);
+            publicDependency_.AddEntriesFrom(ref input, _repeated_publicDependency_codec);
             break;
           }
           case 90:
           case 88: {
-            weakDependency_.AddEntriesFrom(input, _repeated_weakDependency_codec);
+            weakDependency_.AddEntriesFrom(ref input, _repeated_weakDependency_codec);
             break;
           }
           case 98: {
@@ -1270,34 +1278,38 @@ namespace Google.Protobuf.Reflection {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
             Name = input.ReadString();
             break;
           }
           case 18: {
-            field_.AddEntriesFrom(input, _repeated_field_codec);
+            field_.AddEntriesFrom(ref input, _repeated_field_codec);
             break;
           }
           case 26: {
-            nestedType_.AddEntriesFrom(input, _repeated_nestedType_codec);
+            nestedType_.AddEntriesFrom(ref input, _repeated_nestedType_codec);
             break;
           }
           case 34: {
-            enumType_.AddEntriesFrom(input, _repeated_enumType_codec);
+            enumType_.AddEntriesFrom(ref input, _repeated_enumType_codec);
             break;
           }
           case 42: {
-            extensionRange_.AddEntriesFrom(input, _repeated_extensionRange_codec);
+            extensionRange_.AddEntriesFrom(ref input, _repeated_extensionRange_codec);
             break;
           }
           case 50: {
-            extension_.AddEntriesFrom(input, _repeated_extension_codec);
+            extension_.AddEntriesFrom(ref input, _repeated_extension_codec);
             break;
           }
           case 58: {
@@ -1308,15 +1320,15 @@ namespace Google.Protobuf.Reflection {
             break;
           }
           case 66: {
-            oneofDecl_.AddEntriesFrom(input, _repeated_oneofDecl_codec);
+            oneofDecl_.AddEntriesFrom(ref input, _repeated_oneofDecl_codec);
             break;
           }
           case 74: {
-            reservedRange_.AddEntriesFrom(input, _repeated_reservedRange_codec);
+            reservedRange_.AddEntriesFrom(ref input, _repeated_reservedRange_codec);
             break;
           }
           case 82: {
-            reservedName_.AddEntriesFrom(input, _repeated_reservedName_codec);
+            reservedName_.AddEntriesFrom(ref input, _repeated_reservedName_codec);
             break;
           }
         }
@@ -1619,11 +1631,15 @@ namespace Google.Protobuf.Reflection {
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         public void MergeFrom(pb::CodedInputStream input) {
+          input.ReadRawMessage(this);
+        }
+
+        public void MergeFrom_Internal(ref pb::ParseContext input) {
           uint tag;
           while ((tag = input.ReadTag()) != 0) {
             switch(tag) {
               default:
-                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
                 break;
               case 8: {
                 Start = input.ReadInt32();
@@ -1874,11 +1890,15 @@ namespace Google.Protobuf.Reflection {
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         public void MergeFrom(pb::CodedInputStream input) {
+          input.ReadRawMessage(this);
+        }
+
+        public void MergeFrom_Internal(ref pb::ParseContext input) {
           uint tag;
           while ((tag = input.ReadTag()) != 0) {
             switch(tag) {
               default:
-                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
                 break;
               case 8: {
                 Start = input.ReadInt32();
@@ -2064,16 +2084,20 @@ namespace Google.Protobuf.Reflection {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            if (!pb::ExtensionSet.TryMergeFieldFrom(ref _extensions, input)) {
-              _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            if (!pb::ExtensionSet.TryMergeFieldFrom(ref _extensions, ref input)) {
+              _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             }
             break;
           case 7994: {
-            uninterpretedOption_.AddEntriesFrom(input, _repeated_uninterpretedOption_codec);
+            uninterpretedOption_.AddEntriesFrom(ref input, _repeated_uninterpretedOption_codec);
             break;
           }
         }
@@ -2670,11 +2694,15 @@ namespace Google.Protobuf.Reflection {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
             Name = input.ReadString();
@@ -3037,11 +3065,15 @@ namespace Google.Protobuf.Reflection {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
             Name = input.ReadString();
@@ -3333,18 +3365,22 @@ namespace Google.Protobuf.Reflection {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
             Name = input.ReadString();
             break;
           }
           case 18: {
-            value_.AddEntriesFrom(input, _repeated_value_codec);
+            value_.AddEntriesFrom(ref input, _repeated_value_codec);
             break;
           }
           case 26: {
@@ -3355,11 +3391,11 @@ namespace Google.Protobuf.Reflection {
             break;
           }
           case 34: {
-            reservedRange_.AddEntriesFrom(input, _repeated_reservedRange_codec);
+            reservedRange_.AddEntriesFrom(ref input, _repeated_reservedRange_codec);
             break;
           }
           case 42: {
-            reservedName_.AddEntriesFrom(input, _repeated_reservedName_codec);
+            reservedName_.AddEntriesFrom(ref input, _repeated_reservedName_codec);
             break;
           }
         }
@@ -3609,11 +3645,15 @@ namespace Google.Protobuf.Reflection {
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         public void MergeFrom(pb::CodedInputStream input) {
+          input.ReadRawMessage(this);
+        }
+
+        public void MergeFrom_Internal(ref pb::ParseContext input) {
           uint tag;
           while ((tag = input.ReadTag()) != 0) {
             switch(tag) {
               default:
-                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
                 break;
               case 8: {
                 Start = input.ReadInt32();
@@ -3887,11 +3927,15 @@ namespace Google.Protobuf.Reflection {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
             Name = input.ReadString();
@@ -4148,18 +4192,22 @@ namespace Google.Protobuf.Reflection {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
             Name = input.ReadString();
             break;
           }
           case 18: {
-            method_.AddEntriesFrom(input, _repeated_method_codec);
+            method_.AddEntriesFrom(ref input, _repeated_method_codec);
             break;
           }
           case 26: {
@@ -4566,11 +4614,15 @@ namespace Google.Protobuf.Reflection {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
             Name = input.ReadString();
@@ -5698,12 +5750,16 @@ namespace Google.Protobuf.Reflection {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            if (!pb::ExtensionSet.TryMergeFieldFrom(ref _extensions, input)) {
-              _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            if (!pb::ExtensionSet.TryMergeFieldFrom(ref _extensions, ref input)) {
+              _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             }
             break;
           case 10: {
@@ -5787,7 +5843,7 @@ namespace Google.Protobuf.Reflection {
             break;
           }
           case 7994: {
-            uninterpretedOption_.AddEntriesFrom(input, _repeated_uninterpretedOption_codec);
+            uninterpretedOption_.AddEntriesFrom(ref input, _repeated_uninterpretedOption_codec);
             break;
           }
         }
@@ -6306,12 +6362,16 @@ namespace Google.Protobuf.Reflection {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            if (!pb::ExtensionSet.TryMergeFieldFrom(ref _extensions, input)) {
-              _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            if (!pb::ExtensionSet.TryMergeFieldFrom(ref _extensions, ref input)) {
+              _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             }
             break;
           case 8: {
@@ -6331,7 +6391,7 @@ namespace Google.Protobuf.Reflection {
             break;
           }
           case 7994: {
-            uninterpretedOption_.AddEntriesFrom(input, _repeated_uninterpretedOption_codec);
+            uninterpretedOption_.AddEntriesFrom(ref input, _repeated_uninterpretedOption_codec);
             break;
           }
         }
@@ -6853,12 +6913,16 @@ namespace Google.Protobuf.Reflection {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            if (!pb::ExtensionSet.TryMergeFieldFrom(ref _extensions, input)) {
-              _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            if (!pb::ExtensionSet.TryMergeFieldFrom(ref _extensions, ref input)) {
+              _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             }
             break;
           case 8: {
@@ -6886,7 +6950,7 @@ namespace Google.Protobuf.Reflection {
             break;
           }
           case 7994: {
-            uninterpretedOption_.AddEntriesFrom(input, _repeated_uninterpretedOption_codec);
+            uninterpretedOption_.AddEntriesFrom(ref input, _repeated_uninterpretedOption_codec);
             break;
           }
         }
@@ -7135,16 +7199,20 @@ namespace Google.Protobuf.Reflection {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            if (!pb::ExtensionSet.TryMergeFieldFrom(ref _extensions, input)) {
-              _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            if (!pb::ExtensionSet.TryMergeFieldFrom(ref _extensions, ref input)) {
+              _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             }
             break;
           case 7994: {
-            uninterpretedOption_.AddEntriesFrom(input, _repeated_uninterpretedOption_codec);
+            uninterpretedOption_.AddEntriesFrom(ref input, _repeated_uninterpretedOption_codec);
             break;
           }
         }
@@ -7432,12 +7500,16 @@ namespace Google.Protobuf.Reflection {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            if (!pb::ExtensionSet.TryMergeFieldFrom(ref _extensions, input)) {
-              _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            if (!pb::ExtensionSet.TryMergeFieldFrom(ref _extensions, ref input)) {
+              _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             }
             break;
           case 16: {
@@ -7449,7 +7521,7 @@ namespace Google.Protobuf.Reflection {
             break;
           }
           case 7994: {
-            uninterpretedOption_.AddEntriesFrom(input, _repeated_uninterpretedOption_codec);
+            uninterpretedOption_.AddEntriesFrom(ref input, _repeated_uninterpretedOption_codec);
             break;
           }
         }
@@ -7700,12 +7772,16 @@ namespace Google.Protobuf.Reflection {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            if (!pb::ExtensionSet.TryMergeFieldFrom(ref _extensions, input)) {
-              _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            if (!pb::ExtensionSet.TryMergeFieldFrom(ref _extensions, ref input)) {
+              _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             }
             break;
           case 8: {
@@ -7713,7 +7789,7 @@ namespace Google.Protobuf.Reflection {
             break;
           }
           case 7994: {
-            uninterpretedOption_.AddEntriesFrom(input, _repeated_uninterpretedOption_codec);
+            uninterpretedOption_.AddEntriesFrom(ref input, _repeated_uninterpretedOption_codec);
             break;
           }
         }
@@ -7960,12 +8036,16 @@ namespace Google.Protobuf.Reflection {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            if (!pb::ExtensionSet.TryMergeFieldFrom(ref _extensions, input)) {
-              _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            if (!pb::ExtensionSet.TryMergeFieldFrom(ref _extensions, ref input)) {
+              _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             }
             break;
           case 264: {
@@ -7973,7 +8053,7 @@ namespace Google.Protobuf.Reflection {
             break;
           }
           case 7994: {
-            uninterpretedOption_.AddEntriesFrom(input, _repeated_uninterpretedOption_codec);
+            uninterpretedOption_.AddEntriesFrom(ref input, _repeated_uninterpretedOption_codec);
             break;
           }
         }
@@ -8261,12 +8341,16 @@ namespace Google.Protobuf.Reflection {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            if (!pb::ExtensionSet.TryMergeFieldFrom(ref _extensions, input)) {
-              _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            if (!pb::ExtensionSet.TryMergeFieldFrom(ref _extensions, ref input)) {
+              _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             }
             break;
           case 264: {
@@ -8278,7 +8362,7 @@ namespace Google.Protobuf.Reflection {
             break;
           }
           case 7994: {
-            uninterpretedOption_.AddEntriesFrom(input, _repeated_uninterpretedOption_codec);
+            uninterpretedOption_.AddEntriesFrom(ref input, _repeated_uninterpretedOption_codec);
             break;
           }
         }
@@ -8739,14 +8823,18 @@ namespace Google.Protobuf.Reflection {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 18: {
-            name_.AddEntriesFrom(input, _repeated_name_codec);
+            name_.AddEntriesFrom(ref input, _repeated_name_codec);
             break;
           }
           case 26: {
@@ -9017,11 +9105,15 @@ namespace Google.Protobuf.Reflection {
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         public void MergeFrom(pb::CodedInputStream input) {
+          input.ReadRawMessage(this);
+        }
+
+        public void MergeFrom_Internal(ref pb::ParseContext input) {
           uint tag;
           while ((tag = input.ReadTag()) != 0) {
             switch(tag) {
               default:
-                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
                 break;
               case 10: {
                 NamePart_ = input.ReadString();
@@ -9234,14 +9326,18 @@ namespace Google.Protobuf.Reflection {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
-            location_.AddEntriesFrom(input, _repeated_location_codec);
+            location_.AddEntriesFrom(ref input, _repeated_location_codec);
             break;
           }
         }
@@ -9586,20 +9682,24 @@ namespace Google.Protobuf.Reflection {
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         public void MergeFrom(pb::CodedInputStream input) {
+          input.ReadRawMessage(this);
+        }
+
+        public void MergeFrom_Internal(ref pb::ParseContext input) {
           uint tag;
           while ((tag = input.ReadTag()) != 0) {
             switch(tag) {
               default:
-                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
                 break;
               case 10:
               case 8: {
-                path_.AddEntriesFrom(input, _repeated_path_codec);
+                path_.AddEntriesFrom(ref input, _repeated_path_codec);
                 break;
               }
               case 18:
               case 16: {
-                span_.AddEntriesFrom(input, _repeated_span_codec);
+                span_.AddEntriesFrom(ref input, _repeated_span_codec);
                 break;
               }
               case 26: {
@@ -9611,7 +9711,7 @@ namespace Google.Protobuf.Reflection {
                 break;
               }
               case 50: {
-                leadingDetachedComments_.AddEntriesFrom(input, _repeated_leadingDetachedComments_codec);
+                leadingDetachedComments_.AddEntriesFrom(ref input, _repeated_leadingDetachedComments_codec);
                 break;
               }
             }
@@ -9791,14 +9891,18 @@ namespace Google.Protobuf.Reflection {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
-            annotation_.AddEntriesFrom(input, _repeated_annotation_codec);
+            annotation_.AddEntriesFrom(ref input, _repeated_annotation_codec);
             break;
           }
         }
@@ -10088,15 +10192,19 @@ namespace Google.Protobuf.Reflection {
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         public void MergeFrom(pb::CodedInputStream input) {
+          input.ReadRawMessage(this);
+        }
+
+        public void MergeFrom_Internal(ref pb::ParseContext input) {
           uint tag;
           while ((tag = input.ReadTag()) != 0) {
             switch(tag) {
               default:
-                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
                 break;
               case 10:
               case 8: {
-                path_.AddEntriesFrom(input, _repeated_path_codec);
+                path_.AddEntriesFrom(ref input, _repeated_path_codec);
                 break;
               }
               case 18: {

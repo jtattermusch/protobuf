@@ -374,22 +374,26 @@ namespace Google.Protobuf.WellKnownTypes {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
             Name = input.ReadString();
             break;
           }
           case 18: {
-            methods_.AddEntriesFrom(input, _repeated_methods_codec);
+            methods_.AddEntriesFrom(ref input, _repeated_methods_codec);
             break;
           }
           case 26: {
-            options_.AddEntriesFrom(input, _repeated_options_codec);
+            options_.AddEntriesFrom(ref input, _repeated_options_codec);
             break;
           }
           case 34: {
@@ -404,7 +408,7 @@ namespace Google.Protobuf.WellKnownTypes {
             break;
           }
           case 50: {
-            mixins_.AddEntriesFrom(input, _repeated_mixins_codec);
+            mixins_.AddEntriesFrom(ref input, _repeated_mixins_codec);
             break;
           }
           case 56: {
@@ -775,11 +779,15 @@ namespace Google.Protobuf.WellKnownTypes {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
             Name = input.ReadString();
@@ -802,7 +810,7 @@ namespace Google.Protobuf.WellKnownTypes {
             break;
           }
           case 50: {
-            options_.AddEntriesFrom(input, _repeated_options_codec);
+            options_.AddEntriesFrom(ref input, _repeated_options_codec);
             break;
           }
           case 56: {
@@ -1104,11 +1112,15 @@ namespace Google.Protobuf.WellKnownTypes {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
             Name = input.ReadString();

@@ -568,78 +568,82 @@ namespace Google.Protobuf.TestProtos {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
-            mapInt32Int32_.AddEntriesFrom(input, _map_mapInt32Int32_codec);
+            mapInt32Int32_.AddEntriesFrom(ref input, _map_mapInt32Int32_codec);
             break;
           }
           case 18: {
-            mapInt64Int64_.AddEntriesFrom(input, _map_mapInt64Int64_codec);
+            mapInt64Int64_.AddEntriesFrom(ref input, _map_mapInt64Int64_codec);
             break;
           }
           case 26: {
-            mapUint32Uint32_.AddEntriesFrom(input, _map_mapUint32Uint32_codec);
+            mapUint32Uint32_.AddEntriesFrom(ref input, _map_mapUint32Uint32_codec);
             break;
           }
           case 34: {
-            mapUint64Uint64_.AddEntriesFrom(input, _map_mapUint64Uint64_codec);
+            mapUint64Uint64_.AddEntriesFrom(ref input, _map_mapUint64Uint64_codec);
             break;
           }
           case 42: {
-            mapSint32Sint32_.AddEntriesFrom(input, _map_mapSint32Sint32_codec);
+            mapSint32Sint32_.AddEntriesFrom(ref input, _map_mapSint32Sint32_codec);
             break;
           }
           case 50: {
-            mapSint64Sint64_.AddEntriesFrom(input, _map_mapSint64Sint64_codec);
+            mapSint64Sint64_.AddEntriesFrom(ref input, _map_mapSint64Sint64_codec);
             break;
           }
           case 58: {
-            mapFixed32Fixed32_.AddEntriesFrom(input, _map_mapFixed32Fixed32_codec);
+            mapFixed32Fixed32_.AddEntriesFrom(ref input, _map_mapFixed32Fixed32_codec);
             break;
           }
           case 66: {
-            mapFixed64Fixed64_.AddEntriesFrom(input, _map_mapFixed64Fixed64_codec);
+            mapFixed64Fixed64_.AddEntriesFrom(ref input, _map_mapFixed64Fixed64_codec);
             break;
           }
           case 74: {
-            mapSfixed32Sfixed32_.AddEntriesFrom(input, _map_mapSfixed32Sfixed32_codec);
+            mapSfixed32Sfixed32_.AddEntriesFrom(ref input, _map_mapSfixed32Sfixed32_codec);
             break;
           }
           case 82: {
-            mapSfixed64Sfixed64_.AddEntriesFrom(input, _map_mapSfixed64Sfixed64_codec);
+            mapSfixed64Sfixed64_.AddEntriesFrom(ref input, _map_mapSfixed64Sfixed64_codec);
             break;
           }
           case 90: {
-            mapInt32Float_.AddEntriesFrom(input, _map_mapInt32Float_codec);
+            mapInt32Float_.AddEntriesFrom(ref input, _map_mapInt32Float_codec);
             break;
           }
           case 98: {
-            mapInt32Double_.AddEntriesFrom(input, _map_mapInt32Double_codec);
+            mapInt32Double_.AddEntriesFrom(ref input, _map_mapInt32Double_codec);
             break;
           }
           case 106: {
-            mapBoolBool_.AddEntriesFrom(input, _map_mapBoolBool_codec);
+            mapBoolBool_.AddEntriesFrom(ref input, _map_mapBoolBool_codec);
             break;
           }
           case 114: {
-            mapStringString_.AddEntriesFrom(input, _map_mapStringString_codec);
+            mapStringString_.AddEntriesFrom(ref input, _map_mapStringString_codec);
             break;
           }
           case 122: {
-            mapInt32Bytes_.AddEntriesFrom(input, _map_mapInt32Bytes_codec);
+            mapInt32Bytes_.AddEntriesFrom(ref input, _map_mapInt32Bytes_codec);
             break;
           }
           case 130: {
-            mapInt32Enum_.AddEntriesFrom(input, _map_mapInt32Enum_codec);
+            mapInt32Enum_.AddEntriesFrom(ref input, _map_mapInt32Enum_codec);
             break;
           }
           case 138: {
-            mapInt32ForeignMessage_.AddEntriesFrom(input, _map_mapInt32ForeignMessage_codec);
+            mapInt32ForeignMessage_.AddEntriesFrom(ref input, _map_mapInt32ForeignMessage_codec);
             break;
           }
         }
@@ -865,11 +869,15 @@ namespace Google.Protobuf.TestProtos {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
             if (testMap_ == null) {
@@ -1026,14 +1034,18 @@ namespace Google.Protobuf.TestProtos {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
-            mapInt32Message_.AddEntriesFrom(input, _map_mapInt32Message_codec);
+            mapInt32Message_.AddEntriesFrom(ref input, _map_mapInt32Message_codec);
             break;
           }
         }
@@ -1201,18 +1213,22 @@ namespace Google.Protobuf.TestProtos {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
-            map1_.AddEntriesFrom(input, _map_map1_codec);
+            map1_.AddEntriesFrom(ref input, _map_map1_codec);
             break;
           }
           case 18: {
-            map2_.AddEntriesFrom(input, _map_map2_codec);
+            map2_.AddEntriesFrom(ref input, _map_map2_codec);
             break;
           }
         }
@@ -1602,70 +1618,74 @@ namespace Google.Protobuf.TestProtos {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
-            mapInt32Int32_.AddEntriesFrom(input, _map_mapInt32Int32_codec);
+            mapInt32Int32_.AddEntriesFrom(ref input, _map_mapInt32Int32_codec);
             break;
           }
           case 18: {
-            mapInt64Int64_.AddEntriesFrom(input, _map_mapInt64Int64_codec);
+            mapInt64Int64_.AddEntriesFrom(ref input, _map_mapInt64Int64_codec);
             break;
           }
           case 26: {
-            mapUint32Uint32_.AddEntriesFrom(input, _map_mapUint32Uint32_codec);
+            mapUint32Uint32_.AddEntriesFrom(ref input, _map_mapUint32Uint32_codec);
             break;
           }
           case 34: {
-            mapUint64Uint64_.AddEntriesFrom(input, _map_mapUint64Uint64_codec);
+            mapUint64Uint64_.AddEntriesFrom(ref input, _map_mapUint64Uint64_codec);
             break;
           }
           case 42: {
-            mapSint32Sint32_.AddEntriesFrom(input, _map_mapSint32Sint32_codec);
+            mapSint32Sint32_.AddEntriesFrom(ref input, _map_mapSint32Sint32_codec);
             break;
           }
           case 50: {
-            mapSint64Sint64_.AddEntriesFrom(input, _map_mapSint64Sint64_codec);
+            mapSint64Sint64_.AddEntriesFrom(ref input, _map_mapSint64Sint64_codec);
             break;
           }
           case 58: {
-            mapFixed32Fixed32_.AddEntriesFrom(input, _map_mapFixed32Fixed32_codec);
+            mapFixed32Fixed32_.AddEntriesFrom(ref input, _map_mapFixed32Fixed32_codec);
             break;
           }
           case 66: {
-            mapFixed64Fixed64_.AddEntriesFrom(input, _map_mapFixed64Fixed64_codec);
+            mapFixed64Fixed64_.AddEntriesFrom(ref input, _map_mapFixed64Fixed64_codec);
             break;
           }
           case 74: {
-            mapSfixed32Sfixed32_.AddEntriesFrom(input, _map_mapSfixed32Sfixed32_codec);
+            mapSfixed32Sfixed32_.AddEntriesFrom(ref input, _map_mapSfixed32Sfixed32_codec);
             break;
           }
           case 82: {
-            mapSfixed64Sfixed64_.AddEntriesFrom(input, _map_mapSfixed64Sfixed64_codec);
+            mapSfixed64Sfixed64_.AddEntriesFrom(ref input, _map_mapSfixed64Sfixed64_codec);
             break;
           }
           case 90: {
-            mapInt32Float_.AddEntriesFrom(input, _map_mapInt32Float_codec);
+            mapInt32Float_.AddEntriesFrom(ref input, _map_mapInt32Float_codec);
             break;
           }
           case 98: {
-            mapInt32Double_.AddEntriesFrom(input, _map_mapInt32Double_codec);
+            mapInt32Double_.AddEntriesFrom(ref input, _map_mapInt32Double_codec);
             break;
           }
           case 106: {
-            mapBoolBool_.AddEntriesFrom(input, _map_mapBoolBool_codec);
+            mapBoolBool_.AddEntriesFrom(ref input, _map_mapBoolBool_codec);
             break;
           }
           case 114: {
-            mapInt32Enum_.AddEntriesFrom(input, _map_mapInt32Enum_codec);
+            mapInt32Enum_.AddEntriesFrom(ref input, _map_mapInt32Enum_codec);
             break;
           }
           case 122: {
-            mapInt32ForeignMessage_.AddEntriesFrom(input, _map_mapInt32ForeignMessage_codec);
+            mapInt32ForeignMessage_.AddEntriesFrom(ref input, _map_mapInt32ForeignMessage_codec);
             break;
           }
         }
@@ -1873,14 +1893,18 @@ namespace Google.Protobuf.TestProtos {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
-            type_.AddEntriesFrom(input, _map_type_codec);
+            type_.AddEntriesFrom(ref input, _map_type_codec);
             break;
           }
         }
@@ -2042,14 +2066,18 @@ namespace Google.Protobuf.TestProtos {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void MergeFrom(pb::CodedInputStream input) {
+      input.ReadRawMessage(this);
+    }
+
+    public void MergeFrom_Internal(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
         switch(tag) {
           default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
-            entry_.AddEntriesFrom(input, _map_entry_codec);
+            entry_.AddEntriesFrom(ref input, _map_entry_codec);
             break;
           }
         }
