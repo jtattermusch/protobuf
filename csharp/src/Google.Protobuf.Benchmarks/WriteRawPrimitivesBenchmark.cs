@@ -131,24 +131,24 @@ namespace Google.Protobuf.Benchmarks
             cos.CheckNoSpaceLeft();
         }
 
-        [Benchmark]
-        [Arguments(1)]
-        [Arguments(2)]
-        [Arguments(3)]
-        [Arguments(4)]
-        [Arguments(5)]
-        public void WriteRawVarint32_WriteContext(int encodedSize)
-        {
-            var values = varint32Values[encodedSize];
-            var span = new Span<byte>(outputBuffer);
-            WriteContext.Initialize(ref span, out WriteContext ctx);
-            foreach (var value in values)
-            {
-                ctx.WriteUInt32(value);
-            }
-            ctx.Flush();
-            ctx.CheckNoSpaceLeft();
-        }
+        // [Benchmark]
+        // [Arguments(1)]
+        // [Arguments(2)]
+        // [Arguments(3)]
+        // [Arguments(4)]
+        // [Arguments(5)]
+        // public void WriteRawVarint32_WriteContext(int encodedSize)
+        // {
+        //     var values = varint32Values[encodedSize];
+        //     var span = new Span<byte>(outputBuffer);
+        //     WriteContext.Initialize(ref span, out WriteContext ctx);
+        //     foreach (var value in values)
+        //     {
+        //         ctx.WriteUInt32(value);
+        //     }
+        //     ctx.Flush();
+        //     ctx.CheckNoSpaceLeft();
+        // }
 
         [Benchmark]
         [Arguments(1)]
@@ -173,29 +173,29 @@ namespace Google.Protobuf.Benchmarks
             cos.CheckNoSpaceLeft();
         }
 
-        [Benchmark]
-        [Arguments(1)]
-        [Arguments(2)]
-        [Arguments(3)]
-        [Arguments(4)]
-        [Arguments(5)]
-        [Arguments(6)]
-        [Arguments(7)]
-        [Arguments(8)]
-        [Arguments(9)]
-        [Arguments(10)]
-        public void WriteRawVarint64_WriteContext(int encodedSize)
-        {
-            var values = varint64Values[encodedSize];
-            var span = new Span<byte>(outputBuffer);
-            WriteContext.Initialize(ref span, out WriteContext ctx);
-            foreach (var value in values)
-            {
-                ctx.WriteUInt64(value);
-            }
-            ctx.Flush();
-            ctx.CheckNoSpaceLeft();
-        }
+        // [Benchmark]
+        // [Arguments(1)]
+        // [Arguments(2)]
+        // [Arguments(3)]
+        // [Arguments(4)]
+        // [Arguments(5)]
+        // [Arguments(6)]
+        // [Arguments(7)]
+        // [Arguments(8)]
+        // [Arguments(9)]
+        // [Arguments(10)]
+        // public void WriteRawVarint64_WriteContext(int encodedSize)
+        // {
+        //     var values = varint64Values[encodedSize];
+        //     var span = new Span<byte>(outputBuffer);
+        //     WriteContext.Initialize(ref span, out WriteContext ctx);
+        //     foreach (var value in values)
+        //     {
+        //         ctx.WriteUInt64(value);
+        //     }
+        //     ctx.Flush();
+        //     ctx.CheckNoSpaceLeft();
+        // }
 
         [Benchmark]
         public void WriteFixed32_CodedOutputStream()
@@ -210,19 +210,19 @@ namespace Google.Protobuf.Benchmarks
             cos.CheckNoSpaceLeft();
         }
 
-        [Benchmark]
-        public void WriteFixed32_WriteContext()
-        {
-            const int encodedSize = sizeof(uint);
-            var span = new Span<byte>(outputBuffer);
-            WriteContext.Initialize(ref span, out WriteContext ctx);
-            for (uint i = 0; i < BytesToWrite / encodedSize; i++)
-            {
-                ctx.WriteFixed32(12345);
-            }
-            ctx.Flush();
-            ctx.CheckNoSpaceLeft();
-        }
+        // [Benchmark]
+        // public void WriteFixed32_WriteContext()
+        // {
+        //     const int encodedSize = sizeof(uint);
+        //     var span = new Span<byte>(outputBuffer);
+        //     WriteContext.Initialize(ref span, out WriteContext ctx);
+        //     for (uint i = 0; i < BytesToWrite / encodedSize; i++)
+        //     {
+        //         ctx.WriteFixed32(12345);
+        //     }
+        //     ctx.Flush();
+        //     ctx.CheckNoSpaceLeft();
+        // }
 
         [Benchmark]
         public void WriteFixed64_CodedOutputStream()
@@ -237,19 +237,19 @@ namespace Google.Protobuf.Benchmarks
             cos.CheckNoSpaceLeft();
         }
 
-        [Benchmark]
-        public void WriteFixed64_WriteContext()
-        {
-            const int encodedSize = sizeof(ulong);
-            var span = new Span<byte>(outputBuffer);
-            WriteContext.Initialize(ref span, out WriteContext ctx);
-            for (uint i = 0; i < BytesToWrite / encodedSize; i++)
-            {
-                ctx.WriteFixed64(123456789);
-            }
-            ctx.Flush();
-            ctx.CheckNoSpaceLeft();
-        }
+        // [Benchmark]
+        // public void WriteFixed64_WriteContext()
+        // {
+        //     const int encodedSize = sizeof(ulong);
+        //     var span = new Span<byte>(outputBuffer);
+        //     WriteContext.Initialize(ref span, out WriteContext ctx);
+        //     for (uint i = 0; i < BytesToWrite / encodedSize; i++)
+        //     {
+        //         ctx.WriteFixed64(123456789);
+        //     }
+        //     ctx.Flush();
+        //     ctx.CheckNoSpaceLeft();
+        // }
 
         [Benchmark]
         public void WriteRawFloat_CodedOutputStream()
@@ -263,18 +263,18 @@ namespace Google.Protobuf.Benchmarks
             cos.CheckNoSpaceLeft();
         }
 
-        [Benchmark]
-        public void WriteRawFloat_WriteContext()
-        {
-            var span = new Span<byte>(outputBuffer);
-            WriteContext.Initialize(ref span, out WriteContext ctx);
-            foreach (var value in floatValues)
-            {
-                ctx.WriteFloat(value);
-            }
-            ctx.Flush();
-            ctx.CheckNoSpaceLeft();
-        }
+        // [Benchmark]
+        // public void WriteRawFloat_WriteContext()
+        // {
+        //     var span = new Span<byte>(outputBuffer);
+        //     WriteContext.Initialize(ref span, out WriteContext ctx);
+        //     foreach (var value in floatValues)
+        //     {
+        //         ctx.WriteFloat(value);
+        //     }
+        //     ctx.Flush();
+        //     ctx.CheckNoSpaceLeft();
+        // }
 
         [Benchmark]
         public void WriteRawDouble_CodedOutputStream()
@@ -288,18 +288,18 @@ namespace Google.Protobuf.Benchmarks
             cos.CheckNoSpaceLeft();
         }
 
-        [Benchmark]
-        public void WriteRawDouble_WriteContext()
-        {
-            var span = new Span<byte>(outputBuffer);
-            WriteContext.Initialize(ref span, out WriteContext ctx);
-            foreach (var value in doubleValues)
-            {
-                ctx.WriteDouble(value);
-            }
-            ctx.Flush();
-            ctx.CheckNoSpaceLeft();
-        }
+        // [Benchmark]
+        // public void WriteRawDouble_WriteContext()
+        // {
+        //     var span = new Span<byte>(outputBuffer);
+        //     WriteContext.Initialize(ref span, out WriteContext ctx);
+        //     foreach (var value in doubleValues)
+        //     {
+        //         ctx.WriteDouble(value);
+        //     }
+        //     ctx.Flush();
+        //     ctx.CheckNoSpaceLeft();
+        // }
 
         [Benchmark]
         [ArgumentsSource(nameof(StringEncodedSizes))]
@@ -315,20 +315,20 @@ namespace Google.Protobuf.Benchmarks
             cos.CheckNoSpaceLeft();
         }
 
-        [Benchmark]
-        [ArgumentsSource(nameof(StringEncodedSizes))]
-        public void WriteString_WriteContext(int encodedSize)
-        {
-            var values = stringValues[encodedSize];
-            var span = new Span<byte>(outputBuffer);
-            WriteContext.Initialize(ref span, out WriteContext ctx);
-            foreach (var value in values)
-            {
-                ctx.WriteString(value);
-            }
-            ctx.Flush();
-            ctx.CheckNoSpaceLeft();
-        }
+        // [Benchmark]
+        // [ArgumentsSource(nameof(StringEncodedSizes))]
+        // public void WriteString_WriteContext(int encodedSize)
+        // {
+        //     var values = stringValues[encodedSize];
+        //     var span = new Span<byte>(outputBuffer);
+        //     WriteContext.Initialize(ref span, out WriteContext ctx);
+        //     foreach (var value in values)
+        //     {
+        //         ctx.WriteString(value);
+        //     }
+        //     ctx.Flush();
+        //     ctx.CheckNoSpaceLeft();
+        // }
 
         [Benchmark]
         [ArgumentsSource(nameof(NonAsciiStringEncodedSizes))]
@@ -344,20 +344,20 @@ namespace Google.Protobuf.Benchmarks
             cos.CheckNoSpaceLeft();
         }
 
-        [Benchmark]
-        [ArgumentsSource(nameof(NonAsciiStringEncodedSizes))]
-        public void WriteNonAsciiString_WriteContext(int encodedSize)
-        {
-            var values = nonAsciiStringValues[encodedSize];
-            var span = new Span<byte>(outputBuffer);
-            WriteContext.Initialize(ref span, out WriteContext ctx);
-            foreach (var value in values)
-            {
-                ctx.WriteString(value);
-            }
-            ctx.Flush();
-            ctx.CheckNoSpaceLeft();
-        }
+        // [Benchmark]
+        // [ArgumentsSource(nameof(NonAsciiStringEncodedSizes))]
+        // public void WriteNonAsciiString_WriteContext(int encodedSize)
+        // {
+        //     var values = nonAsciiStringValues[encodedSize];
+        //     var span = new Span<byte>(outputBuffer);
+        //     WriteContext.Initialize(ref span, out WriteContext ctx);
+        //     foreach (var value in values)
+        //     {
+        //         ctx.WriteString(value);
+        //     }
+        //     ctx.Flush();
+        //     ctx.CheckNoSpaceLeft();
+        // }
 
         [Benchmark]
         [ArgumentsSource(nameof(StringEncodedSizes))]
@@ -373,20 +373,20 @@ namespace Google.Protobuf.Benchmarks
             cos.CheckNoSpaceLeft();
         }
 
-        [Benchmark]
-        [ArgumentsSource(nameof(StringEncodedSizes))]
-        public void WriteBytes_WriteContext(int encodedSize)
-        {
-            var values = byteStringValues[encodedSize];
-            var span = new Span<byte>(outputBuffer);
-            WriteContext.Initialize(ref span, out WriteContext ctx);
-            foreach (var value in values)
-            {
-                ctx.WriteBytes(value);
-            }
-            ctx.Flush();
-            ctx.CheckNoSpaceLeft();
-        }
+        // [Benchmark]
+        // [ArgumentsSource(nameof(StringEncodedSizes))]
+        // public void WriteBytes_WriteContext(int encodedSize)
+        // {
+        //     var values = byteStringValues[encodedSize];
+        //     var span = new Span<byte>(outputBuffer);
+        //     WriteContext.Initialize(ref span, out WriteContext ctx);
+        //     foreach (var value in values)
+        //     {
+        //         ctx.WriteBytes(value);
+        //     }
+        //     ctx.Flush();
+        //     ctx.CheckNoSpaceLeft();
+        // }
 
         private static uint[] CreateRandomVarints32(Random random, int valueCount, int encodedSize)
         {

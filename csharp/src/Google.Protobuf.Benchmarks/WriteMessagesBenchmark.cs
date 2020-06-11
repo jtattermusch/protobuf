@@ -71,11 +71,11 @@ namespace Google.Protobuf.Benchmarks
             return manyWrapperFieldsTest.WriteToCodedOutputStream_PreAllocatedBuffer();
         }
 
-        [Benchmark]
-        public byte[] ManyWrapperFieldsMessage_WriteToSpan()
-        {
-            return manyWrapperFieldsTest.WriteToSpan_PreAllocatedBuffer();
-        }
+        // [Benchmark]
+        // public byte[] ManyWrapperFieldsMessage_WriteToSpan()
+        // {
+        //     return manyWrapperFieldsTest.WriteToSpan_PreAllocatedBuffer();
+        // }
 
 
         [Benchmark]
@@ -90,11 +90,11 @@ namespace Google.Protobuf.Benchmarks
             return manyPrimitiveFieldsTest.WriteToCodedOutputStream_PreAllocatedBuffer();
         }
 
-        [Benchmark]
-        public byte[] ManyPrimitiveFieldsMessage_WriteToSpan()
-        {
-            return manyPrimitiveFieldsTest.WriteToSpan_PreAllocatedBuffer();
-        }
+        // [Benchmark]
+        // public byte[] ManyPrimitiveFieldsMessage_WriteToSpan()
+        // {
+        //     return manyPrimitiveFieldsTest.WriteToSpan_PreAllocatedBuffer();
+        // }
 
         [Benchmark]
         public byte[] EmptyMessage_ToByteArray()
@@ -108,11 +108,11 @@ namespace Google.Protobuf.Benchmarks
             return emptyMessageTest.WriteToCodedOutputStream_PreAllocatedBuffer();
         }
 
-        [Benchmark]
-        public byte[] EmptyMessage_WriteToSpan()
-        {
-            return emptyMessageTest.WriteToSpan_PreAllocatedBuffer();
-        }
+        // [Benchmark]
+        // public byte[] EmptyMessage_WriteToSpan()
+        // {
+        //     return emptyMessageTest.WriteToSpan_PreAllocatedBuffer();
+        // }
 
         [Benchmark]
         [ArgumentsSource(nameof(MessageCountValues))]
@@ -121,12 +121,12 @@ namespace Google.Protobuf.Benchmarks
             manyWrapperFieldsTest.WriteDelimitedMessagesToCodedOutputStream_PreAllocatedBuffer(messageCount);
         }
 
-        [Benchmark]
-        [ArgumentsSource(nameof(MessageCountValues))]
-        public void ManyWrapperFieldsMessage_WriteDelimitedMessagesToSpan(int messageCount)
-        {
-            manyWrapperFieldsTest.WriteDelimitedMessagesToSpan_PreAllocatedBuffer(messageCount);
-        }
+        // [Benchmark]
+        // [ArgumentsSource(nameof(MessageCountValues))]
+        // public void ManyWrapperFieldsMessage_WriteDelimitedMessagesToSpan(int messageCount)
+        // {
+        //     manyWrapperFieldsTest.WriteDelimitedMessagesToSpan_PreAllocatedBuffer(messageCount);
+        // }
 
         [Benchmark]
         [ArgumentsSource(nameof(MessageCountValues))]
@@ -135,12 +135,12 @@ namespace Google.Protobuf.Benchmarks
             manyPrimitiveFieldsTest.WriteDelimitedMessagesToCodedOutputStream_PreAllocatedBuffer(messageCount);
         }
 
-        [Benchmark]
-        [ArgumentsSource(nameof(MessageCountValues))]
-        public void ManyPrimitiveFieldsMessage_WriteDelimitedMessagesToSpan(int messageCount)
-        {
-            manyPrimitiveFieldsTest.WriteDelimitedMessagesToSpan_PreAllocatedBuffer(messageCount);
-        }
+        // [Benchmark]
+        // [ArgumentsSource(nameof(MessageCountValues))]
+        // public void ManyPrimitiveFieldsMessage_WriteDelimitedMessagesToSpan(int messageCount)
+        // {
+        //     manyPrimitiveFieldsTest.WriteDelimitedMessagesToSpan_PreAllocatedBuffer(messageCount);
+        // }
 
         private class SubTest
         {
@@ -166,12 +166,12 @@ namespace Google.Protobuf.Benchmarks
                 return outputBuffer;
             }
 
-            public byte[] WriteToSpan_PreAllocatedBuffer()
-            {
-                var span = new Span<byte>(outputBuffer);  // use pre-existing output buffer
-                message.WriteTo(span);
-                return outputBuffer;
-            }
+            // public byte[] WriteToSpan_PreAllocatedBuffer()
+            // {
+            //     var span = new Span<byte>(outputBuffer);  // use pre-existing output buffer
+            //     message.WriteTo(span);
+            //     return outputBuffer;
+            // }
 
             public byte[] WriteDelimitedMessagesToCodedOutputStream_PreAllocatedBuffer(int messageCount)
             {
@@ -183,16 +183,16 @@ namespace Google.Protobuf.Benchmarks
                 return multipleMessagesOutputBuffer;
             }
 
-            public byte[] WriteDelimitedMessagesToSpan_PreAllocatedBuffer(int messageCount)
-            {
-                var span = new Span<byte>(multipleMessagesOutputBuffer);  // use pre-existing output buffer
-                WriteContext.Initialize(ref span, out WriteContext ctx);
-                for (int i = 0; i < messageCount; i++)
-                {
-                    ctx.WriteMessage(message);
-                }
-                return multipleMessagesOutputBuffer;
-            }
+            // public byte[] WriteDelimitedMessagesToSpan_PreAllocatedBuffer(int messageCount)
+            // {
+            //     var span = new Span<byte>(multipleMessagesOutputBuffer);  // use pre-existing output buffer
+            //     WriteContext.Initialize(ref span, out WriteContext ctx);
+            //     for (int i = 0; i < messageCount; i++)
+            //     {
+            //         ctx.WriteMessage(message);
+            //     }
+            //     return multipleMessagesOutputBuffer;
+            // }
         }
     }
 }
