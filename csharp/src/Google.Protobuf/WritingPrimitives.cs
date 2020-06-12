@@ -297,7 +297,7 @@ namespace Google.Protobuf
         /// there's enough buffer space left to whizz through without checking
         /// for each byte; otherwise, we resort to calling WriteRawByte each time.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteRawVarint32(ref Span<byte> buffer, ref WriterInternalState state, uint value)
         {
             // Optimize for the common case of a single byte value
@@ -327,7 +327,7 @@ namespace Google.Protobuf
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteRawVarint64(ref Span<byte> buffer, ref WriterInternalState state, ulong value)
         {
             while (value > 127 && state.position < state.limit)
