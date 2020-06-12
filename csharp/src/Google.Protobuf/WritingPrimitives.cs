@@ -160,8 +160,9 @@ namespace Google.Protobuf
         /// <summary>
         /// Writes a string field value, without a tag, to the stream.
         /// The data is length-prefixed.
+        /// NOTE: This method is intentionally not marked as "AggressiveInlining", because it slows down
+        /// serialization of messages with lots of empty fields.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteString(ref Span<byte> buffer, ref WriterInternalState state, string value)
         {
             // Optimise the case where we have enough space to write
@@ -401,7 +402,7 @@ namespace Google.Protobuf
 
         // This method is intentionally not marked as "AggressiveInlining", because it slows down
         // serialization of messages with lots of empty fields. Likely explanation is that
-        // thw WriteRawTag invocations in InternalWriteTo method get inlined too deep and that makes
+        // the WriteRawTag invocations in InternalWriteTo method get inlined too deep and that makes
         // skipping fields which are not present more expensive (which is especially constly for
         // messages with lots of fields of which only a few are present).
         public static void WriteRawByte(ref Span<byte> buffer, ref WriterInternalState state, byte value)
@@ -434,8 +435,9 @@ namespace Google.Protobuf
 
         /// <summary>
         /// Writes out part of an array of bytes.
+        /// NOTE: This method is intentionally not marked as "AggressiveInlining", because it slows down
+        /// serialization of messages with lots of empty fields.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteRawBytes(ref Span<byte> buffer, ref WriterInternalState state, ReadOnlySpan<byte> value)
         {
             if (state.limit - state.position >= value.Length)
