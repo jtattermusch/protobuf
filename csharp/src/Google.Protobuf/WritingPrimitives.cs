@@ -53,7 +53,7 @@ namespace Google.Protobuf
         /// <summary>
         /// Writes a double field value, without a tag, to the stream.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteDouble(ref Span<byte> buffer, ref WriterInternalState state, double value)
         {
             WriteRawLittleEndian64(ref buffer, ref state, (ulong)BitConverter.DoubleToInt64Bits(value));
@@ -107,7 +107,7 @@ namespace Google.Protobuf
         /// <summary>
         /// Writes an int64 field value, without a tag, to the stream.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteInt64(ref Span<byte> buffer, ref WriterInternalState state, long value)
         {
             WriteRawVarint64(ref buffer, ref state, (ulong)value);
@@ -116,7 +116,7 @@ namespace Google.Protobuf
         /// <summary>
         /// Writes an int32 field value, without a tag, to the stream.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteInt32(ref Span<byte> buffer, ref WriterInternalState state, int value)
         {
             if (value >= 0)
@@ -350,7 +350,7 @@ namespace Google.Protobuf
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteRawLittleEndian32(ref Span<byte> buffer, ref WriterInternalState state, uint value)
         {
             const int length = sizeof(uint);
@@ -368,7 +368,7 @@ namespace Google.Protobuf
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteRawLittleEndian64(ref Span<byte> buffer, ref WriterInternalState state, ulong value)
         {
             const int length = sizeof(ulong);
