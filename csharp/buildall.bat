@@ -1,6 +1,12 @@
 @rem Builds Google.Protobuf and runs the tests
 
-dotnet build src/Google.Protobuf.sln || goto :error
+dotnet --version
+
+which dotnet
+
+dotnet restore -v diag src/Google.Protobuf.sln
+
+dotnet build -v diag src/Google.Protobuf.sln || goto :error
 
 echo Running tests.
 
