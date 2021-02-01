@@ -4,9 +4,9 @@ dotnet --version
 
 which dotnet
 
-dotnet restore -v diag src/Google.Protobuf.sln
+@rem dotnet restore -v diag src/Google.Protobuf.sln
 
-dotnet build -v diag src/Google.Protobuf.sln || goto :error
+dotnet build -v d src/Google.Protobuf.sln || goto :error
 
 echo Running tests.
 
